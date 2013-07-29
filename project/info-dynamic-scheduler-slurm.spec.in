@@ -1,0 +1,51 @@
+Summary: Information provider for SLURM
+Name: info-dynamic-scheduler-slurm
+Version: @PKGVERSION@
+Release: @PKGRELEASE@%{?dist}%{!?dist:.el5}
+License: Apache Software License
+Vendor: EMI
+URL: http://glite.cern.ch/
+Group: Applications/Internet
+BuildArch: noarch
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+AutoReqProv: yes
+Source: %{name}.tar.gz
+
+
+%if ! (0%{?fedora} > 12 || 0%{?rhel} > 5)
+%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
+%{!?python_sitearch: %global python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")}
+%endif
+
+%description
+Information provider for SLURM.
+
+%prep
+
+%setup -c -q
+
+%build
+
+%install
+rm -rf %{buildroot}
+mkdir -p %{buildroot}
+python setup.py install -O1 --prefix %{buildroot}/usr --install-data %{buildroot}
+
+%clean
+rm -rf %{buildroot}
+
+%files
+%defattr(-,root,root)
+/usr/libexec/info-dynamic-slurm
+/usr/libexec/lrmsinfo-slurm
+%if 0%{?el6}
+%{python_sitelib}/*.egg-info
+%endif
+%dir /etc/lrms
+%config(noreplace) /etc/lrms/slurm.conf
+
+%changelog
+* Fri Aug 31 2012 CREAM group <cream-support@lists.infn.it> - @PKGVERSION@-@PKGRELEASE@
+- New major release
+
+
