@@ -49,6 +49,8 @@ setup(
       long_description='''Information provider for SLURM''',
       license='Apache Software License',
       author_email='CREAM group <cream-support@lists.infn.it>',
+      packages=['SLURMInfoUtils'],
+      package_dir = {'': 'src'},
       data_files=[
                   ('etc/lrms', ['config/slurm.conf']),
                   ('usr/libexec', libexec_list)
