@@ -38,6 +38,9 @@ rm -rf %{buildroot}
 %defattr(-,root,root)
 /usr/libexec/info-dynamic-slurm
 /usr/libexec/lrmsinfo-slurm
+%{python_sitelib}/SLURMInfoUtils/*.py
+%{python_sitelib}/SLURMInfoUtils/*.pyc
+%{python_sitelib}/SLURMInfoUtils/*.pyo
 %if 0%{?el6}
 %{python_sitelib}/*.egg-info
 %endif

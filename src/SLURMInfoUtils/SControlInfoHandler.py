@@ -14,5 +14,14 @@
 # See the License for the specific language governing permissions and 
 # limitations under the License.
 
-__all__ = [ "SInfoHandler", "SControlInfoHandler" ]
+import sys
+import re
+import time
+import shlex
+import subprocess
+
+
+def parseCPUInfo(filename=None):
+    pass
+    
 
