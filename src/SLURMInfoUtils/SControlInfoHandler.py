@@ -40,6 +40,7 @@ class NodesInfoHandler(Thread):
 
     def __init__(self):
         Thread.__init__(self)
+        self.errList = list()
         self.ncpu = 0
         self.nfree = 0
         self.stateRegex = re.compile('State=(IDLE|COMPLETING|ALLOCATED|DRAINING|MIXED)')
@@ -87,6 +88,7 @@ class JobInfoHandler(Thread):
 
     def __init__(self, oStream):
         Thread.__init__(self)
+        self.errList = list()
         self.outStream = oStream
         
         self.jidRegex = re.compile('JobId=([^\s]+)')
@@ -125,7 +127,13 @@ class JobInfoHandler(Thread):
             
         return result
                 
-        
+    
+    def convertTime(self, tstr):
+        if tstr == 'Unknown':
+            return 0
+        return int(time.mktime(time.strptime(tstr, '%Y-%m-%dT%H:%M:%S')))
+    
+    
     def run(self):
         line = self.stream.readline()
         
@@ -176,13 +184,15 @@ class JobInfoHandler(Thread):
                 
                 parsed = self.subtimeRegex.search(line)
                 if not parsed:
-                    continue
-                subTime = int(time.mktime(time.strptime(parsed.group(1), '%Y-%m-%dT%H:%M:%S')))
+                    subTime = 0
+                else:
+                    subTime = self.convertTime(parsed.group(1))
                 
                 parsed = self.sttimeRegex.search(line)
                 if not parsed:
-                    continue
-                startTime = int(time.mktime(time.strptime(parsed.group(1), '%Y-%m-%dT%H:%M:%S')))
+                    startTime = 0
+                else:
+                    startTime = self.convertTime(parsed.group(1))
                 
                 formatStr = "{'group': '%s', 'name': '%s', 'qtime': %d, 'jobid': '%s', 'queue': '%s', 'cpucount': %d, 'user': '%s', "
                 tmpbuff = formatStr % (gid, name, subTime, jobId, queue, cpuCount, uid)
@@ -192,9 +202,12 @@ class JobInfoHandler(Thread):
                 #
                 if timeLimit:
                     tmpbuff += "'maxwalltime': %d, " % timeLimit
-                    
+                
+                if startTime > 0:
+                    tmpbuff += "'start': %d, " % startTime
+                
                 if jState == "RUNNING":
-                    tmpbuff += "'start': %d, 'state': 'running'}\n" % startTime
+                    tmpbuff += "'state': 'running'}\n"
                 else:
                     tmpbuff += "'state': 'queued'}\n"
                 
@@ -221,30 +234,30 @@ def parseJobInfo(outStream, filename=None):
     else:
         cmd = shlex.split('scontrol -o show jobs')
     
-    container JobInfoHandler(outStream)
+    container = JobInfoHandler(outStream)
     parseStream(cmd, container)
 
 
-def parseStream(cmd, container)
+def parseStream(cmd, container):
     try:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
-        stdout_thread = container.setStream(process.stdout)
+        container.setStream(process.stdout)
         stderr_thread = ErrorHandler(process.stderr)
     
-        stdout_thread.start()
+        container.start()
         stderr_thread.start()
     
         ret_code = process.wait()
     
-        stdout_thread.join()
+        container.join()
         stderr_thread.join()
         
         if ret_code <> 0:
             raise Exception(stderr_thread.message)
             
-        if len(stdout_thread.errList) > 0:
-            raise Exception(stdout_thread.errList[0])
+        if len(container.errList) > 0:
+            raise Exception(container.errList[0])
 
     except:
         etype, evalue, etraceback = sys.exc_info()

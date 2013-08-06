@@ -38,7 +38,7 @@ def main():
             if optName in ("-i", "--input"):
                 infile = optValue
         
-        ncpu, freecpu = SControlInfoHandler.parseCPUInfo()
+        ncpu, freecpu = SControlInfoHandler.parseCPUInfo(infile)
         sys.stdout.write("nactive      %d\n" % ncpu)
         sys.stdout.write("nfree        %d\n" % freecpu)
         # timestamp refers to UTC
@@ -48,7 +48,7 @@ def main():
         #
         sys.stdout.write("schedCycle   26\n")
 
-        SControlInfoHandler.parseJobInfo(sys.stdout)
+        SControlInfoHandler.parseJobInfo(sys.stdout, infile)
 
     except getopt.GetoptError:
         print sys.argv[0] + ": error parsing command line\n"
