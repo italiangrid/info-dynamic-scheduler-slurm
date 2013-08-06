@@ -48,7 +48,7 @@ def main():
         #
         sys.stdout.write("schedCycle   26\n")
 
-        
+        SControlInfoHandler.parseJobInfo(sys.stdout)
 
     except getopt.GetoptError:
         print sys.argv[0] + ": error parsing command line\n"
