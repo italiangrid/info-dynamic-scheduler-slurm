@@ -21,20 +21,7 @@ import shlex
 import subprocess
 from threading import Thread
 
-
-class ErrorHandler(Thread):
-
-    def __init__(self, err_stream):
-        Thread.__init__(self)
-        self.stream = err_stream
-        self.message = ""
-    
-    def run(self):
-        line = self.stream.readline()
-        while line:
-            self.message = self.message + line
-            line = self.stream.readline()
-
+import CommonUtils
 
 class NodesInfoHandler(Thread):
 
@@ -224,7 +211,7 @@ def parseCPUInfo(filename=None):
         cmd = shlex.split('scontrol -o show nodes')
     
     container = NodesInfoHandler()
-    parseStream(cmd, container)
+    CommonUtils.parseStream(cmd, container)
     return container.ncpu, container.nfree
 
 
@@ -235,32 +222,7 @@ def parseJobInfo(outStream, filename=None):
         cmd = shlex.split('scontrol -o show jobs')
     
     container = JobInfoHandler(outStream)
-    parseStream(cmd, container)
+    CommonUtils.parseStream(cmd, container)
 
 
-def parseStream(cmd, container):
-    try:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    
-        container.setStream(process.stdout)
-        stderr_thread = ErrorHandler(process.stderr)
-    
-        container.start()
-        stderr_thread.start()
-    
-        ret_code = process.wait()
-    
-        container.join()
-        stderr_thread.join()
-        
-        if ret_code <> 0:
-            raise Exception(stderr_thread.message)
-            
-        if len(container.errList) > 0:
-            raise Exception(container.errList[0])
-
-    except:
-        etype, evalue, etraceback = sys.exc_info()
-        raise Exception("%s: (%s)" % (etype, evalue))
-    
 
