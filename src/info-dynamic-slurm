@@ -24,33 +24,9 @@ import subprocess
 from threading import Thread
 
 from SLURMInfoUtils import SInfoHandler
+from SLURMInfoUtils import CommonUtils
 
 
-
-
-def readDNsAndAttr(filename, dnRE, queueRE):
-    dnsAndQueues = dict()
-    ldifFile = None
-    try:
-    
-        ldifFile = open(filename)
-        
-        for line in ldifFile.readlines():
-            
-            tmpm = dnRE.match(line)
-            if tmpm <> None:
-                currDN = line.strip()
-                continue
-                
-            tmpm = queueRE.match(line)
-            if tmpm <> None:
-                dnsAndQueues[currDN] = tmpm.group(1).strip()
-        
-    finally:
-        if ldifFile:
-            ldifFile.close()
-
-    return dnsAndQueues
 
 
 
@@ -105,52 +81,65 @@ def main():
     if foundErr:
         sys.exit(1)
 
-    glue1QueueTable = dict()
-    glue2QueueTable = dict()
+    glue1QueueTable = None
+    glue2QueueTable = None
     managerTable = None
     
+    allQueues = set()
+    
+    try:
+        if config['outputformat'] <> "glue2":
+
+            glue1QueueTable = CommonUtils.fillinGLUE1QueueTable(config["glue1-static-file-CE"])
+            for queue in glue1QueueTable.values():
+                allQueues.add(queue)
+        
+        if config['outputformat'] <> "glue1":
+
+            glue2QueueTable = CommonUtils.fillinGLUE2QueueTable(config["glue2-static-file-computing-share"])
+            for queue in glue2QueueTable.values():
+                allQueues.add(queue)
+            
+            managerTable = CommonUtils.fillinManagerTable(config["glue2-static-file-computing-manager"])
+            
+    except Exception, ex:
+        sys.stderr.write(str(ex) + '\n')
+        sys.exit(1)
+
+
+    infoContainer = SInfoHandler.parse()    
+
+    out = sys.stdout
+
     if config['outputformat'] <> "glue2":
+    
+        for glue1DN in glue1QueueTable:
         
-        glue1DNRegex = re.compile("dn:\s*GlueCEUniqueID\s*=\s*[^$]+")
-        glue1QueueRegex = re.compile("GlueCEName\s*:\s*([^$]+)")
-
-        try:
-
-            glue1QueueTable = readDNsAndAttr(config["glue1-static-file-CE"], glue1DNRegex, glue1QueueRegex)
-        
-        except Exception, ex:
-            sys.stderr.write(str(ex) + '\n')
-            sys.exit(1)
-
-
-
-
+            queue = glue1QueueTable[glue1DN]
+            if not queue in infoContainer:
+                continue
+            qInfo = infoContainer[queue]
+            
+            out.write(glue1DN + '\n')
+            
+            out.write('GlueCEStateStatus: %s\n' % qInfo.state)
+            out.write('\n')
+    
+    
+    
     if config['outputformat'] <> "glue1":
     
-        glue2DNRegex = re.compile("dn:\s*GLUE2ShareID\s*=\s*[^$]+")
-        glue2QueueRegex = re.compile("GLUE2ComputingShareMappingQueue\s*:\s*([^$]+)")
-
-        managerRegex = re.compile("dn:\s*GLUE2ManagerId\s*=\s*[^$]+")
-        manAttrRegex = re.compile("GLUE2ManagerID\s*:\s*([^$]+)")
-        
-        try:
-
-            glue2QueueTable = readDNsAndAttr(config["glue2-static-file-computing-share"], glue2DNRegex, glue2QueueRegex)
-            managerTable = readDNsAndAttr(config["glue2-static-file-computing-manager"], managerRegex, manAttrRegex)
+        for glue2DN in glue2QueueTable:
+            queue = glue2QueueTable[glue2DN]
+            if not queue in infoContainer:
+                continue
+            qInfo = infoContainer[queue]
             
-        except Exception, ex:
-            sys.stderr.write(str(ex) + '\n')
-            sys.exit(1)
-
-
-    
-
-    resultInfo = SInfoHandler.parse()    
-    
-    pass
-
-
-
+            out.write(glue2DN + '\n')
+            
+            out.write('GLUE2ComputingShareServingState: %s\n' % qInfo.state.lower())
+            out.write('GLUE2EntityCreationTime: %s\n' % now)
+            out.write('\n')
 
 
 

@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import sys
+import re
 import subprocess
 from threading import Thread
 
@@ -58,4 +59,68 @@ def parseStream(cmd, container):
         etype, evalue, etraceback = sys.exc_info()
         raise Exception("%s: (%s)" % (etype, evalue))
     
+
+
+
+
+def readDNsAndAttr(filename, dnRE, queueRE):
+    dnsAndQueues = dict()
+    ldifFile = None
+    try:
+    
+        ldifFile = open(filename)
+        
+        for line in ldifFile.readlines():
+            
+            tmpm = dnRE.match(line)
+            if tmpm <> None:
+                currDN = line.strip()
+                continue
+                
+            tmpm = queueRE.match(line)
+            if tmpm <> None:
+                dnsAndQueues[currDN] = tmpm.group(1).strip()
+        
+    finally:
+        if ldifFile:
+            ldifFile.close()
+
+    return dnsAndQueues
+
+
+#
+# Create a HashTable of type <CE DN: queuename>
+#
+glue1DNRegex = re.compile("dn:\s*GlueCEUniqueID\s*=\s*[^$]+")
+glue1QueueRegex = re.compile("GlueCEName\s*:\s*([^$]+)")
+
+def fillinGLUE1QueueTable(ldifFilename):
+
+    return readDNsAndAttr(ldifFilename, glue1DNRegex, glue1QueueRegex)
+
+
+#
+# Create a HashTable of type <Share DN: queuename>
+#
+glue2DNRegex = re.compile("dn:\s*GLUE2ShareID\s*=\s*[^$]+")
+glue2QueueRegex = re.compile("GLUE2ComputingShareMappingQueue\s*:\s*([^$]+)")
+
+def fillinGLUE2QueueTable(ldifFilename):
+
+    return readDNsAndAttr(ldifFilename, glue2DNRegex, glue2QueueRegex)
+
+    
+#
+# Create a HashTable of type <managerDN: managerID>
+#
+managerRegex = re.compile("dn:\s*GLUE2ManagerId\s*=\s*[^$]+")
+manAttrRegex = re.compile("GLUE2ManagerID\s*:\s*([^$]+)")
+
+def fillinManagerTable(ldifFilename):
+
+    return readDNsAndAttr(ldifFilename, managerRegex, manAttrRegex)
+
+
+
+
 

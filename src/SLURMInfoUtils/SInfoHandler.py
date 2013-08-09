@@ -21,32 +21,78 @@ import shlex
 import subprocess
 from threading import Thread
 
+import CommonUtils
 
-class ErrorHandler(Thread):
 
-    def __init__(self, err_stream):
-        Thread.__init__(self)
-        self.stream = err_stream
-        self.message = ""
-    
-    def run(self):
-        line = self.stream.readline()
-        while line:
-            self.message = self.message + line
-            line = self.stream.readline()
+class PartitionInfo:
+
+    def __init__(self):
+        self.state = "unknown"
+
 
 
 class PartitionInfoHandler(Thread):
 
-    def __init__(self, stream):
+    def __init__(self):
         Thread.__init__(self)
+        self.errList = list()
+        self.qtable = dict()
+        
+    def setStream(self, stream):
         self.stream = stream
+
+    def __getitem__(self, idx):
+        return self.qtable[idx]
+        
+    def __contains__(self, item):
+        return item in self.qtable
         
     def run(self):
         line = self.stream.readline()
         
         while line:
-            pass
+            try:
+                           
+                line = line.strip()
+                
+                if len(line) == 0:
+                    continue
+                    
+                qTuple = line.split()
+                
+                if len(qTuple) <> 4:
+                    self.errList.append("Wrong format for partition info")
+                    continue
+                
+                queue = qTuple[0]
+                if queue.endswith('*'):
+                    queue = queue[:-1]
+                    
+                pState = qTuple[1]
+                nState = qTuple[3]
+                
+                #
+                # TODO try to detect 'Draining' and 'Queueing'
+                #
+                if queue in self.qtable:
+                
+                    pass
+                    
+                else:
+                
+                    item = PartitionInfo()
+                    if pState == 'up':
+                        item.state = 'Production'
+                    else:
+                        item.state = 'Closed'
+                             
+                    self.qtable[queue] = item
+                
+                    
+                
+            finally:
+                line = self.stream.readline()
+
     # end of thread
 
 
@@ -54,36 +100,16 @@ class PartitionInfoHandler(Thread):
 
 def parse(filename=None):
 
-    outformat="%P "
+    if filename:
+        cmd = shlex.split('cat ' + filename)
+    else:
+        cmd = shlex.split('sinfo -h -o "%P %a %C %T"')
+    
+    container = PartitionInfoHandler()
+    CommonUtils.parseStream(cmd, container)
+    return container
 
-    try:
-        if filename:
-            cmd = shlex.split('cat ' + filename)
-        else:
-            cmd = shlex.split('sinfo -o %s' % outformat)
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    
-        stdout_thread = PartitionInfoHandler(process.stdout)
-        stderr_thread = ErrorHandler(process.stderr)
-    
-        stdout_thread.start()
-        stderr_thread.start()
-    
-        ret_code = process.wait()
-    
-        stdout_thread.join()
-        stderr_thread.join()
-        
-        if ret_code <> 0:
-            raise Exception(stderr_thread.message)
-            
-        if len(stdout_thread.errList) > 0:
-            raise Exception(stdout_thread.errList[0])
-            
-        return stdout_thread
 
-    except:
-        etype, evalue, etraceback = sys.exc_info()
-        raise Exception("%s: (%s)" % (etype, evalue))
+
 
 
