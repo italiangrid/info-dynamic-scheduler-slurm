@@ -73,10 +73,10 @@ class NodesInfoHandler(Thread):
 
 class JobInfoHandler(Thread):
 
-    def __init__(self, oStream):
+    def __init__(self, container):
         Thread.__init__(self)
         self.errList = list()
-        self.outStream = oStream
+        self.jobTables = container
         
         self.jidRegex = re.compile('JobId=([^\s]+)')
         self.nameRegex = re.compile('Name=([^\s]+)')
@@ -127,78 +127,61 @@ class JobInfoHandler(Thread):
         while line:
         
             try:
+                jTable = dict()
             
                 parsed = self.jstateRegex.search(line)
                 if not parsed:
                     continue
-                jState = parsed.group(1)
+                if parsed.group(1) == "RUNNING":
+                    jTable['state'] = 'running'
+                else:
+                    jTable['state'] = 'queued'
                 
                 parsed = self.jidRegex.search(line)
                 if not parsed:
                     continue
-                jobId = parsed.group(1)
+                jTable['jobid'] = parsed.group(1)
                 
                 parsed = self.nameRegex.search(line)
                 if not parsed:
                     continue
-                name = parsed.group(1)
+                jTable['name'] = parsed.group(1)
                 
                 parsed = self.uidRegex.search(line)
                 if not parsed:
                     continue
-                uid = parsed.group(1)
+                jTable['user'] = parsed.group(1)
                 
                 parsed = self.gidRegex.search(line)
                 if not parsed:
                     continue
-                gid = parsed.group(1)
+                jTable['group'] = parsed.group(1)
                 
                 parsed = self.partRegex.search(line)
                 if not parsed:
                     continue
-                queue = parsed.group(1)
+                jTable['queue'] = parsed.group(1)
                 
                 parsed = self.ncpuRegex.search(line)
                 if not parsed:
                     continue
-                cpuCount = int(parsed.group(1))
+                jTable['cpucount'] = int(parsed.group(1))
                 
                 parsed = self.tlimitRegex.search(line)
-                if not parsed:
-                    timeLimit = None
-                else:
-                    timeLimit = self.convertTLimit(parsed.group(1))
+                if parsed:
+                    jTable['maxwalltime'] = self.convertTLimit(parsed.group(1))
                 
                 parsed = self.subtimeRegex.search(line)
                 if not parsed:
-                    subTime = 0
+                    continue
                 else:
-                    subTime = self.convertTime(parsed.group(1))
+                    jTable['qtime'] = self.convertTime(parsed.group(1))
                 
                 parsed = self.sttimeRegex.search(line)
-                if not parsed:
-                    startTime = 0
-                else:
-                    startTime = self.convertTime(parsed.group(1))
+                if parsed:
+                    jTable['start'] = self.convertTime(parsed.group(1))
                 
-                formatStr = "{'group': '%s', 'name': '%s', 'qtime': %d, 'jobid': '%s', 'queue': '%s', 'cpucount': %d, 'user': '%s', "
-                tmpbuff = formatStr % (gid, name, subTime, jobId, queue, cpuCount, uid)
-                
-                #
-                # timeLimit == None means UNLIMITED
-                #
-                if timeLimit:
-                    tmpbuff += "'maxwalltime': %d, " % timeLimit
-                
-                if startTime > 0:
-                    tmpbuff += "'start': %d, " % startTime
-                
-                if jState == "RUNNING":
-                    tmpbuff += "'state': 'running'}\n"
-                else:
-                    tmpbuff += "'state': 'queued'}\n"
-                
-                self.outStream.write(tmpbuff)
+                self.jobTables.append(jTable)
                 
             finally:
                 line = self.stream.readline()
@@ -215,13 +198,13 @@ def parseCPUInfo(filename=None):
     return container.ncpu, container.nfree
 
 
-def parseJobInfo(outStream, filename=None):
+def parseJobInfo(container, filename=None):
     if filename:
         cmd = shlex.split('cat ' + filename)
     else:
         cmd = shlex.split('scontrol -o show jobs')
     
-    container = JobInfoHandler(outStream)
+    container = JobInfoHandler(container)
     CommonUtils.parseStream(cmd, container)
 
 

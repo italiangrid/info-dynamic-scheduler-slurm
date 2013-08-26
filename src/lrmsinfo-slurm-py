@@ -24,6 +24,15 @@ import time
 from SLURMInfoUtils import SControlInfoHandler
 
 
+class StreamContainer:
+
+    def __init__(self, stream):
+        self.stream = stream
+        
+    def append(self, table):
+        self.stream.write(str(table) + "\n")
+
+
 def usage():
     print "Usage: lrmsinfo-slurm [-i <input_file>]"
     print "  input_file : optional text file containing 'scontrol' output"
@@ -48,7 +57,8 @@ def main():
         #
         sys.stdout.write("schedCycle   26\n")
 
-        SControlInfoHandler.parseJobInfo(sys.stdout, infile)
+        sContainer = StreamContainer(sys.stdout)
+        SControlInfoHandler.parseJobInfo(sContainer, infile)
 
     except getopt.GetoptError:
         print sys.argv[0] + ": error parsing command line\n"
