@@ -30,7 +30,7 @@ class NodesInfoHandler(Thread):
         self.errList = list()
         self.ncpu = 0
         self.nfree = 0
-        self.stateRegex = re.compile('State=(IDLE|COMPLETING|ALLOCATED|DRAINING|MIXED)')
+        self.stateRegex = re.compile('State=(IDLE|COMPLETING|ALLOCATED[+]?|DRAINING|MIXED)')
         self.tcpuRegex = re.compile('CPUTot=([0-9]+)')
         self.acpuRegex = re.compile('CPUAlloc=([0-9]+)')
     
@@ -62,7 +62,7 @@ class NodesInfoHandler(Thread):
             
                 acpu = int(parsed.group(1))
 
-                self.ncpu += acpu
+                self.ncpu += tcpu
                 if nodeState <> "DRAINING":
                     self.nfree += (tcpu - acpu)
 
