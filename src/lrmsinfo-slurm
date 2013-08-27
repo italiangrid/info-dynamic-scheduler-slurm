@@ -1,5 +1,8 @@
-#!/bin/awk -f
-
+#!/usr/bin/python
+# Copyright (c) Members of the EGEE Collaboration. 2004. 
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.  
+#
 # Licensed under the Apache License, Version 2.0 (the "License"); 
 # you may not use this file except in compliance with the License. 
 # You may obtain a copy of the License at 
@@ -11,87 +14,64 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
 # See the License for the specific language governing permissions and 
 # limitations under the License.
+# get information from pbs/torque LRMS, spit it out in uniform format
 
-function slurm_nfree()
-{
-	nfree=0;
-	nctiv=0;
-	RS="";
-	while ("scontrol show nodes"| getline) {
-		for(i=1;i<=NF;i++){
-			if ($i ~ /State/) { split($i,node_State,"="); } 
-			if ($i ~ /CPUTot/) { split($i,node_CPUTot,"=");} 
-			if ($i ~ /CPUAlloc/) { split($i,node_CPUAlloc,"=");} 
-		}
-		if(node_State[2] !~ /IDLE|COMPLETING|ALLOCATED|MIXED/) continue;
-		nfree+=node_CPUTot[2];
-		nfree-=node_CPUAlloc[2];
-	}
-	close("scontrol show nodes");
-	return nfree;
-}
-function slurm_nactiv()
-{
-	nctiv=0;
-	RS="";
-	while ("scontrol show nodes"| getline) {
-		for(i=1;i<=NF;i++){
-			if ($i ~ /State/) { split($i,node_State,"="); } 
-			if ($i ~ /CPUAlloc/) { split($i,node_CPUAlloc,"=");} 
-		}
-		if(node_State[2] !~ /IDLE|COMPLETING|ALLOCATED|DRAINING|MIXED/) continue;
-		nactiv+=node_CPUAlloc[2];
-	}
-	close("scontrol show nodes");
-	return nactiv;
-}
-function slurm_mktime(str)
-{
-	split(str,t,"[- T :]")
-	return mktime(t[1] " " t[2] " " t[3] " "  t[4] " " t[5] " " t[6]);
-}
 
-function slurm_timelimit(str)
-{
-	time=0;
-	split("1,60,3600,86400",a,",");
-	split(str,t,"[- T :]")
-	for (i=length(t) ; i> 0 ; i--){
-		time+=t[i]*a[length(t)-i+1];
-	}
-	return time;
-}
-function slurm_jobs()
-{
+import sys
+import getopt
+import time
 
-	RS="";
-	while ("scontrol show job"| getline) {
-		if ($0 ~ /^No jobs in the system/) {break;}
-		for(i=1;i<=NF;i++){
-			if ($i ~ /GroupId/) { split($i,job_GroupId,"[= (]");} 
-			if ($i ~ /Name/) { split($i,job_Name,"=");} 
-			if ($i ~ /SubmitTime/) { split($i,job_SubmitTime,"=");} 
-			if ($i ~ /JobId/) { split($i,job_JobId,"=");} 
-			if ($i ~ /Partition/) { split($i,job_Partition,"=");} 
-			if ($i ~ /StartTime/) { split($i,job_StartTime,"=");} 
-			if ($i ~ /JobState/) { split($i,job_JobState,"=");} 
-			if ($i ~ /NumCPUs/) { split($i,job_NumCPUs,"=");} 
-			if ($i ~ /UserId/) { split($i,job_UserId,"[= (]");} 
-			if ($i ~ /TimeLimit/) { split($i,job_TimeLimit,"=");} 
-		}
-		if(job_JobState[2] ~ /RUNNING/){
-			printf("{'group': '%s', 'name': '%s', 'qtime': %f, 'jobid': '%s', 'queue': '%s', 'start': %f, 'state': 'running', 'cpucount': %d, 'user': '%s', 'maxwalltime': %f}\n",tolower(job_GroupId[2]),tolower(job_Name[2]),slurm_mktime(job_SubmitTime[2]),tolower(job_JobId[2]),tolower(job_Partition[2]),slurm_mktime(job_StartTime[2]),job_NumCPUs[2],tolower(job_UserId[2]),slurm_timelimit(job_TimeLimit[2])  )
-		} else if (job_JobState[2] ~ /PENDING/) {
-			printf("{'group': '%s', 'name': '%s', 'qtime': %f, 'jobid': '%s', 'queue': '%s', 'state': 'queued', 'cpucount': %d, 'user': '%s', 'maxwalltime': %f}\n",tolower(job_GroupId[2]),tolower(job_Name[2]),slurm_mktime(job_SubmitTime[2]),tolower(job_JobId[2]),tolower(job_Partition[2]),job_NumCPUs[2],tolower(job_UserId[2]),slurm_timelimit(job_TimeLimit[2])  )
-		}
-	}
-	close("scontrol show job");
-}
+from SLURMInfoUtils import SControlInfoHandler
 
-BEGIN{
-	printf("nactive      %d\n", slurm_nactiv());
-	printf("nfree        %d\n", slurm_nfree());
-	printf("now          %d\n", systime());
-	printf("schedCycle   %d\n", 26);
-	slurm_jobs();
-}
+
+class StreamContainer:
+
+    def __init__(self, stream):
+        self.stream = stream
+        
+    def append(self, table):
+        self.stream.write(str(table) + "\n")
+
+
+def usage():
+    print "Usage: lrmsinfo-slurm [-i <input_file>]"
+    print "  input_file : optional text file containing 'scontrol' output"
+
+
+def main():
+    try:
+        infile = None
+        
+        opts, args = getopt.getopt(sys.argv[1:], "i:", ["input="])
+        for optName, optValue in opts:
+            if optName in ("-i", "--input"):
+                infile = optValue
+        
+        ncpu, freecpu = SControlInfoHandler.parseCPUInfo(infile)
+        sys.stdout.write("nactive      %d\n" % ncpu)
+        sys.stdout.write("nfree        %d\n" % freecpu)
+        # timestamp refers to UTC
+        sys.stdout.write("now          %d\n" % int(time.time() + time.timezone))
+        #
+        # TODO verify schedCycle
+        #
+        sys.stdout.write("schedCycle   26\n")
+
+        sContainer = StreamContainer(sys.stdout)
+        SControlInfoHandler.parseJobInfo(sContainer, infile)
+
+    except getopt.GetoptError:
+        print sys.argv[0] + ": error parsing command line\n"
+        usage()
+        sys.exit(2)
+    except:
+        etype, evalue, etraceback = sys.exc_info()
+        sys.excepthook(etype, evalue, etraceback)
+        sys.exit(3)
+
+
+
+
+if __name__ == "__main__":
+    main()
+
