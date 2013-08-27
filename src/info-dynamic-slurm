@@ -17,7 +17,6 @@
 
 import sys
 import re
-import socket
 import time
 import shlex
 import subprocess
@@ -25,34 +24,20 @@ from threading import Thread
 
 from SLURMInfoUtils import SInfoHandler
 from SLURMInfoUtils import CommonUtils
-
+from SLURMInfoUtils import SControlInfoHandler
 
 
 
 
 def main():
-    pRegex = re.compile('^\s*([^=\s]+)\s*=([^$]+)$')
     
-    config = {}
-    
-    hostname = socket.getfqdn()
     now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
-    conffile = None
-    foundErr = False
     try:
         if len(sys.argv) <> 2:
             raise Exception("Usage: info-dynamic-pbs <config-file>")
-
-        conffile = open(sys.argv[1])
-        for line in conffile:
-            parsed = pRegex.match(line)
-            if parsed:
-                config[parsed.group(1)] = parsed.group(2).strip(' \n\t"')
-            else:
-                tmps = line.strip()
-                if len(tmps) > 0 and not tmps.startswith('#'):
-                    raise Exception("Error parsing configuration file " + sys.argv[1])
+        
+        config = CommonUtils.readConfigFile(sys.argv[1])
 
         if not "outputformat" in config:
             if "GlueFormat" in config:
@@ -74,17 +59,11 @@ def main():
 
     except Exception, ex:
         sys.stderr.write(str(ex) + '\n')
-        foundErr = True
-
-    if conffile:
-        conffile.close()
-    if foundErr:
         sys.exit(1)
 
     glue1QueueTable = None
     glue2QueueTable = None
     managerTable = None
-    
     allQueues = set()
     
     try:
@@ -102,12 +81,16 @@ def main():
             
             managerTable = CommonUtils.fillinManagerTable(config["glue2-static-file-computing-manager"])
             
+        infoContainer = SInfoHandler.parse()
+        
+        lrmsVer = SControlInfoHandler.parseVersion()
+        
+        totalCPU, freeCPU = SControlInfoHandler.parseCPUInfo()  
+
     except Exception, ex:
         sys.stderr.write(str(ex) + '\n')
         sys.exit(1)
 
-
-    infoContainer = SInfoHandler.parse()    
 
     out = sys.stdout
 
@@ -121,7 +104,13 @@ def main():
             qInfo = infoContainer[queue]
             
             out.write(glue1DN + '\n')
-            
+
+            out.write('GlueCEInfoLRMSVersion: %s\n' % lrmsVer)
+
+            out.write('GlueCEInfoTotalCPUs: %d\n' % totalCPU)
+            out.write('GlueCEPolicyAssignedJobSlots: %d\n' % totalCPU)
+            out.write('GlueCEStateFreeCPUs: %d\n' % freeCPU)
+
             out.write('GlueCEStateStatus: %s\n' % qInfo.state)
             out.write('\n')
     
@@ -129,6 +118,13 @@ def main():
     
     if config['outputformat'] <> "glue1":
     
+        for managerDN in managerTable:
+        
+            out.write(managerDN + '\n')
+            out.write('GLUE2ManagerProductVersion: %s\n' % lrmsVer)
+            out.write('GLUE2EntityCreationTime: %s\n' % now)
+            out.write('\n')
+
         for glue2DN in glue2QueueTable:
             queue = glue2QueueTable[glue2DN]
             if not queue in infoContainer:

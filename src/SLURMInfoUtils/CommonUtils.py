@@ -146,7 +146,9 @@ def readConfigFile(configFile):
     return config
 
 
-def convertTimeLimit(self, tstr):
+def convertTimeLimit(tstr):
+
+    # format [[[dd-]hh:]mm:]ss
     tmpl = tstr.split('-')
     if len(tmpl) > 1:
         result = int(tmpl[0]) * 86400
@@ -154,14 +156,14 @@ def convertTimeLimit(self, tstr):
     else:
         result = 0
         hStr = tmpl[0]
-        
+    
     tmpl = hStr.split(':')
     if len(tmpl) > 0:
-        result += int(tmpl[0]) * 3600
+        result += int(tmpl[-1])
     if len(tmpl) > 1:
-        result += int(tmpl[1]) * 60
+        result += int(tmpl[-2]) * 60
     if len(tmpl) > 2:
-        result += int(tmpl[2])
+        result += int(tmpl[-3]) * 3600
             
     return result
 
