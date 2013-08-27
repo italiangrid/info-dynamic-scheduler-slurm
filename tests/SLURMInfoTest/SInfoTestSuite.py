@@ -25,24 +25,20 @@ class SInfoTestCase(unittest.TestCase):
     def setUp(self):
         self.workspace = Workspace()
         
-        self.partPattern = "%(partid)s %(avail)s 0/2/0/2 %(state)s %(maxcput)s %(defcput)s\n"
+        self.partPattern = "%(partid)s %(state)s %(cpuinfo)s %(maxcput)s %(defcput)s\n"
 
 
     def test_partition_ok(self):
         
         pattern_args = {'partid' : 'creamtest1',
-                        'avail' : 'up',
-                        'state' : 'idle',
+                        'state' : 'up',
+                        'cpuinfo' : '0/2/0/2',
                         'maxcput' : '30:00',
                         'defcput' : 'n/a'}
 
         tmpfile = self.workspace.createFile(self.partPattern % pattern_args)
 
         pattern_args['partid'] = 'creamtest2*'
-        
-        self.workspace.appendToFile(self.partPattern % pattern_args, tmpfile)
-        
-        pattern_args['state'] = 'down*'
         
         self.workspace.appendToFile(self.partPattern % pattern_args, tmpfile)
         
@@ -62,15 +58,15 @@ class SInfoTestCase(unittest.TestCase):
     def test_partition_one_closed(self):
         
         pattern_args = {'partid' : 'creamtest1',
-                        'avail' : 'down',
-                        'state' : 'idle',
+                        'state' : 'down',
+                        'cpuinfo' : '0/2/0/2',
                         'maxcput' : '30:00',
                         'defcput' : 'n/a'}
 
         tmpfile = self.workspace.createFile(self.partPattern % pattern_args)
 
         pattern_args['partid'] = 'creamtest2*'
-        pattern_args['avail'] = 'up'
+        pattern_args['state'] = 'up'
         
         self.workspace.appendToFile(self.partPattern % pattern_args, tmpfile)
         self.workspace.appendToFile(self.partPattern % pattern_args, tmpfile)
@@ -81,6 +77,24 @@ class SInfoTestCase(unittest.TestCase):
         result = result and container['creamtest2'].state == 'Production'
 
         self.assertTrue(result)
+    
+    def test_partition_cpucount_ok(self):
+    
+        pattern_args = {'partid' : 'creamtest1',
+                        'state' : 'up',
+                        'cpuinfo' : '2/2/0/4',
+                        'maxcput' : '30:00',
+                        'defcput' : 'n/a'}
+
+        tmpfile = self.workspace.createFile(self.partPattern % pattern_args)
+
+        container = SInfoHandler.parse(tmpfile)
+        
+        result = container['creamtest1'].freeCPU == 2
+        result = result and container['creamtest1'].totalCPU == 4
+        
+        self.assertTrue(result)
+
 
 
 if __name__ == '__main__':

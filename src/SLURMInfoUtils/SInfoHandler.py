@@ -30,6 +30,8 @@ class PartitionInfo:
         self.state = "unknown"
         self.maxCPUTime = -1
         self.defaultCPUTime = -1
+        self.totalCPU = 0
+        self.freeCPU = 0
 
     def __str__(self):
         return "%s %d %d" % (self.state, self.maxCPUTime, self.defaultCPUTime)
@@ -40,6 +42,8 @@ class PartitionInfoHandler(Thread):
         Thread.__init__(self)
         self.errList = list()
         self.qtable = dict()
+        
+        self.cpuRegex = re.compile('([0-9]+)/([0-9]+)/([0-9]+)/([0-9]+)')
         
     def setStream(self, stream):
         self.stream = stream
@@ -63,7 +67,7 @@ class PartitionInfoHandler(Thread):
                     
                 qTuple = line.split()
                 
-                if len(qTuple) <> 6:
+                if len(qTuple) <> 5:
                     self.errList.append("Wrong format for partition info")
                     continue
                 
@@ -73,18 +77,25 @@ class PartitionInfoHandler(Thread):
                 if not queue in self.qtable:
                     self.qtable[queue] = PartitionInfo()
                     
-                if qTuple[1] == 'down':
+                if qTuple[1] == 'down' or qTuple[1] == 'inactive':
                     self.qtable[queue].state = 'Closed'
                 elif qTuple[1] == 'drain':
                     self.qtable[queue].state = 'Draining'
                 else:
                     self.qtable[queue].state = 'Production'
                 
-                if qTuple[4] <> 'n/a':
-                    self.qtable[queue].maxCPUTime = CommonUtils.convertTimeLimit(qTuple[4])
+                parsed = self.cpuRegex.match(qTuple[2])
+                if not parsed:
+                    self.errList.append("Wrong format for partition cpu info")
+                    continue
+                self.qtable[queue].freeCPU = int(parsed.group(2))
+                self.qtable[queue].totalCPU = int(parsed.group(4))
                 
-                if qTuple[5] <> 'n/a':
-                    self.qtable[queue].defaultCPUTime = CommonUtils.convertTimeLimit(qTuple[5])
+                if qTuple[3] <> 'n/a':
+                    self.qtable[queue].maxCPUTime = CommonUtils.convertTimeLimit(qTuple[3])
+                
+                if qTuple[4] <> 'n/a':
+                    self.qtable[queue].defaultCPUTime = CommonUtils.convertTimeLimit(qTuple[4])
                                 
             finally:
                 line = self.stream.readline()
@@ -99,7 +110,7 @@ def parse(filename=None):
     if filename:
         cmd = shlex.split('cat ' + filename)
     else:
-        cmd = shlex.split('sinfo -h -o "%P %a %C %T %l %L"')
+        cmd = shlex.split('sinfo -h -o "%P %a %C %l %L"')
     
     container = PartitionInfoHandler()
     CommonUtils.parseStream(cmd, container)
