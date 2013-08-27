@@ -44,12 +44,12 @@ class SInfoTestCase(unittest.TestCase):
         
         container = SInfoHandler.parse(tmpfile)
         
-        result = container['creamtest1'].maxCPUTime == 1800
-        result = result and container['creamtest1'].defaultCPUTime == -1
+        result = container['creamtest1'].maxRuntime == 1800
+        result = result and container['creamtest1'].defaultRuntime == -1
         result = result and container['creamtest1'].state == 'Production'
         
-        result = result and container['creamtest2'].maxCPUTime == 1800
-        result = result and container['creamtest2'].defaultCPUTime == -1
+        result = result and container['creamtest2'].maxRuntime == 1800
+        result = result and container['creamtest2'].defaultRuntime == -1
         result = result and container['creamtest2'].state == 'Production'
 
         self.assertTrue(result)

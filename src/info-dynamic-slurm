@@ -109,11 +109,11 @@ def main():
             out.write('GlueCEPolicyAssignedJobSlots: %d\n' % qInfo.totalCPU)
             out.write('GlueCEStateFreeCPUs: %d\n' % qInfo.freeCPU)
 
-            if qInfo.defaultCPUtime <> -1:
-                out.write('GlueCEPolicyMaxCPUTime: %d\n' % (qInfo.defaultCPUTime / 60))
+            if qInfo.defaultRuntime <> -1:
+                out.write('GlueCEPolicyMaxWallClockTime: %d\n' % (qInfo.defaultRuntime / 60))
 
-            if qInfo.maxCPUtime <> -1:
-                out.write('GlueCEPolicyMaxObtainableCPUTime: %d\n' % (qInfo.maxCPUTime / 60))
+            if qInfo.maxRuntime <> -1:
+                out.write('GlueCEPolicyMaxObtainableWallClockTime: %d\n' % (qInfo.maxRuntime / 60))
                 
             out.write('GlueCEStateStatus: %s\n' % qInfo.state)
             out.write('\n')
@@ -137,12 +137,12 @@ def main():
             
             out.write(glue2DN + '\n')
             
-            if qInfo.defaultCPUtime <> -1:
-                out.write('GLUE2ComputingShareDefaultCPUTime: %d\n' % qInfo.defaultCPUTime)
+            if qInfo.defaultRuntime <> -1:
+                out.write('GLUE2ComputingShareDefaultWallTime: %d\n' % qInfo.defaultRuntime)
                 
-            if qInfo.maxCPUtime <> -1:
-                out.write('GLUE2ComputingShareMaxCPUTime: %d\n' % qInfo.maxCPUTime)
-                
+            if qInfo.maxRuntime <> -1:
+                out.write('GLUE2ComputingShareMaxWallTime: %d\n' % qInfo.maxRuntime)
+
             out.write('GLUE2ComputingShareServingState: %s\n' % qInfo.state.lower())
             out.write('GLUE2EntityCreationTime: %s\n' % now)
             out.write('\n')

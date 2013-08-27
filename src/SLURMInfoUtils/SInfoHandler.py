@@ -28,13 +28,13 @@ class PartitionInfo:
 
     def __init__(self):
         self.state = "unknown"
-        self.maxCPUTime = -1
-        self.defaultCPUTime = -1
+        self.maxRuntime = -1
+        self.defaultRuntime = -1
         self.totalCPU = 0
         self.freeCPU = 0
 
     def __str__(self):
-        return "%s %d %d" % (self.state, self.maxCPUTime, self.defaultCPUTime)
+        return "%s %d %d" % (self.state, self.maxRuntime, self.defaultRuntime)
 
 class PartitionInfoHandler(Thread):
 
@@ -92,10 +92,10 @@ class PartitionInfoHandler(Thread):
                 self.qtable[queue].totalCPU = int(parsed.group(4))
                 
                 if qTuple[3] <> 'n/a':
-                    self.qtable[queue].maxCPUTime = CommonUtils.convertTimeLimit(qTuple[3])
+                    self.qtable[queue].maxRuntime = CommonUtils.convertTimeLimit(qTuple[3])
                 
                 if qTuple[4] <> 'n/a':
-                    self.qtable[queue].defaultCPUTime = CommonUtils.convertTimeLimit(qTuple[4])
+                    self.qtable[queue].defaultRuntime = CommonUtils.convertTimeLimit(qTuple[4])
                                 
             finally:
                 line = self.stream.readline()
