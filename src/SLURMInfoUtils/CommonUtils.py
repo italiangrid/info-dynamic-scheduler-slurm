@@ -121,6 +121,48 @@ def fillinManagerTable(ldifFilename):
     return readDNsAndAttr(ldifFilename, managerRegex, manAttrRegex)
 
 
+def readConfigFile(configFile):
 
+    pRegex = re.compile('^\s*([^=\s]+)\s*=([^$]+)$')
+    conffile = None
+    config = dict()
+    
+    try:
+    
+        conffile = open(configFile)
+        for line in conffile:
+            parsed = pRegex.match(line)
+            if parsed:
+                config[parsed.group(1)] = parsed.group(2).strip(' \n\t"')
+            else:
+                tmps = line.strip()
+                if len(tmps) > 0 and not tmps.startswith('#'):
+                    raise Exception("Error parsing configuration file " + configFile)
+
+    finally:
+        if conffile:
+            conffile.close()
+
+    return config
+
+
+def convertTimeLimit(self, tstr):
+    tmpl = tstr.split('-')
+    if len(tmpl) > 1:
+        result = int(tmpl[0]) * 86400
+        hStr = tmpl[1]
+    else:
+        result = 0
+        hStr = tmpl[0]
+        
+    tmpl = hStr.split(':')
+    if len(tmpl) > 0:
+        result += int(tmpl[0]) * 3600
+    if len(tmpl) > 1:
+        result += int(tmpl[1]) * 60
+    if len(tmpl) > 2:
+        result += int(tmpl[2])
+            
+    return result
 
 

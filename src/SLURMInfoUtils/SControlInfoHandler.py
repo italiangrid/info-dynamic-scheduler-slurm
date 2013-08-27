@@ -70,6 +70,16 @@ class NodesInfoHandler(Thread):
                 line = self.stream.readline()
 
 
+def parseCPUInfo(filename=None):
+    if filename:
+        cmd = shlex.split('cat ' + filename)
+    else:
+        cmd = shlex.split('scontrol -o show nodes')
+    
+    container = NodesInfoHandler()
+    CommonUtils.parseStream(cmd, container)
+    return container.ncpu, container.nfree
+
 
 class JobInfoHandler(Thread):
 
@@ -92,28 +102,6 @@ class JobInfoHandler(Thread):
     def setStream(self, stream):
         self.stream = stream
     
-
-    def convertTLimit(self, tstr):
-        if tstr == "UNLIMITED":
-            return None
-        tmpl = tstr.split('-')
-        if len(tmpl) > 1:
-            result = int(tmpl[0]) * 86400
-            hStr = tmpl[1]
-        else:
-            result = 0
-            hStr = tmpl[0]
-        
-        tmpl = hStr.split(':')
-        if len(tmpl) > 0:
-            result += int(tmpl[0]) * 3600
-        if len(tmpl) > 1:
-            result += int(tmpl[1]) * 60
-        if len(tmpl) > 2:
-            result += int(tmpl[2])
-            
-        return result
-                
     
     def convertTime(self, tstr):
         if tstr == 'Unknown':
@@ -169,7 +157,9 @@ class JobInfoHandler(Thread):
                 
                 parsed = self.tlimitRegex.search(line)
                 if parsed:
-                    jTable['maxwalltime'] = self.convertTLimit(parsed.group(1))
+                    tmpLimit = parsed.group(1)
+                    if tmpLimit <> 'UNLIMITED':
+                        jTable['maxwalltime'] = CommonUtils.convertTimeLimit(tmpLimit)
                 
                 parsed = self.subtimeRegex.search(line)
                 if not parsed:
@@ -187,17 +177,6 @@ class JobInfoHandler(Thread):
                 line = self.stream.readline()
 
 
-def parseCPUInfo(filename=None):
-    if filename:
-        cmd = shlex.split('cat ' + filename)
-    else:
-        cmd = shlex.split('scontrol -o show nodes')
-    
-    container = NodesInfoHandler()
-    CommonUtils.parseStream(cmd, container)
-    return container.ncpu, container.nfree
-
-
 def parseJobInfo(container, filename=None):
     if filename:
         cmd = shlex.split('cat ' + filename)
@@ -208,4 +187,36 @@ def parseJobInfo(container, filename=None):
     CommonUtils.parseStream(cmd, container)
 
 
+class JobInfoHandler(Thread):
+
+    def __init__(self, container):
+        Thread.__init__(self)
+        self.errList = list()
+        self.version = ''
+        self.vRegex = re.compile('[a-zA-Z]+\s*([0-9]+\.[0-9]+\.[0-9]+)')
+        
+    def setStream(self, stream):
+        self.stream = stream
+
+    def run(self):
+        line = self.stream.readline()
+        
+        while line:
+        
+            parsed = self.vRegex.search(line)
+            if parsed:
+                self.version = parsed.group(1)
+            
+            line = self.stream.readline()
+
+
+def parseVersion():
+    if filename:
+        cmd = shlex.split('cat ' + filename)
+    else:
+        cmd = shlex.split('scontrol -V')
+    
+    container = VerInfoHandler(container)
+    CommonUtils.parseStream(cmd, container)
+    return container.version
 
