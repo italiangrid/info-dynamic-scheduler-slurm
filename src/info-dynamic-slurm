@@ -57,8 +57,8 @@ def main():
             config["glue2-static-file-computing-share"] = "/var/lib/bdii/gip/ldif/ComputingShare.ldif"
             
 
-    except Exception, ex:
-        sys.stderr.write(str(ex) + '\n')
+    except:
+        sys.stderr.write(CommonUtils.errorMsgFromTrace())
         sys.exit(1)
 
     glue1QueueTable = None
@@ -81,12 +81,12 @@ def main():
             
             managerTable = CommonUtils.fillinManagerTable(config["glue2-static-file-computing-manager"])
             
-        infoContainer = SInfoHandler.parse()
+        slurmCfg = SControlInfoHandler.parseConfiguration()
         
-        lrmsVer = SControlInfoHandler.parseConfiguration().version
+        infoContainer = SInfoHandler.parsePartInfo(slurmCfp)
         
-    except Exception, ex:
-        sys.stderr.write(str(ex) + '\n')
+    except:
+        sys.stderr.write(CommonUtils.errorMsgFromTrace())
         sys.exit(1)
 
 
@@ -103,7 +103,7 @@ def main():
             
             out.write(glue1DN + '\n')
 
-            out.write('GlueCEInfoLRMSVersion: %s\n' % lrmsVer)
+            out.write('GlueCEInfoLRMSVersion: %s\n' % slurmCfg.version)
 
             out.write('GlueCEInfoTotalCPUs: %d\n' % qInfo.totalCPU)
             out.write('GlueCEPolicyAssignedJobSlots: %d\n' % qInfo.totalCPU)
@@ -125,7 +125,7 @@ def main():
         for managerDN in managerTable:
         
             out.write(managerDN + '\n')
-            out.write('GLUE2ManagerProductVersion: %s\n' % lrmsVer)
+            out.write('GLUE2ManagerProductVersion: %s\n' % slurmCfg.version)
             out.write('GLUE2EntityCreationTime: %s\n' % now)
             out.write('\n')
 

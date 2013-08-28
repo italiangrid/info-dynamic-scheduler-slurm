@@ -32,15 +32,17 @@ class PartitionInfo:
         self.defaultRuntime = -1
         self.totalCPU = 0
         self.freeCPU = 0
+        self.slotsPerJob = -1
 
     def __str__(self):
         return "%s %d %d" % (self.state, self.maxRuntime, self.defaultRuntime)
 
 class PartitionInfoHandler(Thread):
 
-    def __init__(self):
+    def __init__(self, config):
         Thread.__init__(self)
         self.errList = list()
+        self.config = config
         self.qtable = dict()
         
         self.cpuRegex = re.compile('([0-9]+)/([0-9]+)/([0-9]+)/([0-9]+)')
@@ -53,7 +55,7 @@ class PartitionInfoHandler(Thread):
         
     def __contains__(self, item):
         return item in self.qtable
-        
+    
     def run(self):
         line = self.stream.readline()
         
@@ -67,8 +69,8 @@ class PartitionInfoHandler(Thread):
                     
                 qTuple = line.split()
                 
-                if len(qTuple) <> 5:
-                    self.errList.append("Wrong format for partition info")
+                if len(qTuple) <> 7:
+                    self.errList.append("Wrong partition info column number: %d" % len(qTuple))
                     continue
                 
                 queue = qTuple[0]
@@ -86,7 +88,7 @@ class PartitionInfoHandler(Thread):
                 
                 parsed = self.cpuRegex.match(qTuple[2])
                 if not parsed:
-                    self.errList.append("Wrong format for partition cpu info")
+                    self.errList.append("Wrong format for partition cpu info: " + qTuple[2])
                     continue
                 self.qtable[queue].freeCPU = int(parsed.group(2))
                 self.qtable[queue].totalCPU = int(parsed.group(4))
@@ -96,6 +98,15 @@ class PartitionInfoHandler(Thread):
                 
                 if qTuple[4] <> 'n/a':
                     self.qtable[queue].defaultRuntime = CommonUtils.convertTimeLimit(qTuple[4])
+                
+                try:
+                    minNodes, maxNodes = CommonUtils.convertJobSize(qTuple[5])
+                except Exception, ex:
+                    self.errList.append("Wrong format for partition job size: " + qTuple[5])
+                    continue
+                    
+                if self.config.slotType == 'NODE':
+                    self.qtable[queue].slotsPerJob = maxNodes
                                 
             finally:
                 line = self.stream.readline()
@@ -105,14 +116,14 @@ class PartitionInfoHandler(Thread):
 
 
 
-def parse(filename=None):
+def parsePartInfo(config, filename=None):
 
     if filename:
         cmd = shlex.split('cat ' + filename)
     else:
-        cmd = shlex.split('sinfo -h -o "%P %a %C %l %L"')
+        cmd = shlex.split('sinfo -h -o "%P %a %C %l %L %s %F"')
     
-    container = PartitionInfoHandler()
+    container = PartitionInfoHandler(config)
     CommonUtils.parseStream(cmd, container)
     return container
 

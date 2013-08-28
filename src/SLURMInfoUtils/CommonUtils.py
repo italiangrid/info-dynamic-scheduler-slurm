@@ -17,6 +17,7 @@
 import sys
 import re
 import subprocess
+import traceback
 from threading import Thread
 
 
@@ -35,6 +36,9 @@ class ErrorHandler(Thread):
 
 
 def parseStream(cmd, container):
+
+    processErr = None
+    
     try:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
@@ -50,17 +54,16 @@ def parseStream(cmd, container):
         stderr_thread.join()
         
         if ret_code <> 0:
-            raise Exception(stderr_thread.message)
+            processErr = stderr_thread.message
             
         if len(container.errList) > 0:
-            raise Exception(container.errList[0])
+            processErr = container.errList[0]
 
     except:
-        etype, evalue, etraceback = sys.exc_info()
-        raise Exception("%s: (%s)" % (etype, evalue))
-    
+        raise Exception(errorMsgFromTrace())
 
-
+    if processErr:
+        raise Exception(processErr)
 
 
 def readDNsAndAttr(filename, dnRE, queueRE):
@@ -166,5 +169,35 @@ def convertTimeLimit(tstr):
         result += int(tmpl[-3]) * 3600
             
     return result
+
+def convertJobSize(sstr):
+
+    minsize = -1
+    maxsize = -1
+    
+    # format nn[-nn|INFINITE|UNLIMITED]
+    tmpl = sstr.split('-')
+    if len(tmpl) > 1:
+        minsize = int(tmpl[0])
+        if not tmpl[1].lower() in ['infinite', 'unlimited']:
+            maxsize = int(tmpl[1])
+    elif len(tmpl) > 0:
+        minsize = int(tmpl[0])
+        maxsize = minsize
+    
+    return minsize, maxsize
+
+def errorMsgFromTrace():
+
+    etype, evalue, etraceback = sys.exc_info()
+    trMessage = ''
+    
+    trList = traceback.extract_tb(etraceback)
+    for trArgs in trList:
+        if 'SLURMInfoUtils' in trArgs[0]:
+            trMessage = '%s: %d' % (trArgs[0], trArgs[1])
+    
+    return '%s (%s)' % (evalue, trMessage)
+
 
 

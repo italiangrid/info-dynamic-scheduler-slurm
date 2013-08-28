@@ -197,6 +197,7 @@ class ConfigInfoHandler(Thread):
         self.version = ''
         self.selectType = 'select/linear'
         self.selectParams = ''
+        self.slotType = 'NODE'
         
     def setStream(self, stream):
         self.stream = stream
@@ -222,6 +223,9 @@ class ConfigInfoHandler(Thread):
                     
             
             line = self.stream.readline()
+        
+        if self.selectType == 'select/cons_res':
+            self.slotType = 'CPU'
 
 
 def parseConfiguration(filename=None):

@@ -20,12 +20,22 @@ import unittest
 from SLURMInfoUtils import SInfoHandler
 from TestUtils import Workspace
 
+class DummyConfig:
+
+    def __init__(self):
+        self.version = '2.6.0'
+        self.selectType = 'select/linear'
+        self.selectParams = ''
+        self.slotType = 'NODE'
+
+
+
 class SInfoTestCase(unittest.TestCase):
 
     def setUp(self):
         self.workspace = Workspace()
         
-        self.partPattern = "%(partid)s %(state)s %(cpuinfo)s %(maxcput)s %(defcput)s\n"
+        self.partPattern = "%(partid)s %(state)s %(cpuinfo)s %(maxcput)s %(defcput)s %(jsize)s %(nodes)s\n"
 
 
     def test_partition_ok(self):
@@ -34,7 +44,9 @@ class SInfoTestCase(unittest.TestCase):
                         'state' : 'up',
                         'cpuinfo' : '0/2/0/2',
                         'maxcput' : '30:00',
-                        'defcput' : 'n/a'}
+                        'defcput' : 'n/a',
+                        'jsize' : '1-infinite',
+                        'nodes' : '0/1/0/1'}
 
         tmpfile = self.workspace.createFile(self.partPattern % pattern_args)
 
@@ -42,7 +54,8 @@ class SInfoTestCase(unittest.TestCase):
         
         self.workspace.appendToFile(self.partPattern % pattern_args, tmpfile)
         
-        container = SInfoHandler.parse(tmpfile)
+        config = DummyConfig()
+        container = SInfoHandler.parsePartInfo(config, tmpfile)
         
         result = container['creamtest1'].maxRuntime == 1800
         result = result and container['creamtest1'].defaultRuntime == -1
@@ -61,7 +74,9 @@ class SInfoTestCase(unittest.TestCase):
                         'state' : 'down',
                         'cpuinfo' : '0/2/0/2',
                         'maxcput' : '30:00',
-                        'defcput' : 'n/a'}
+                        'defcput' : 'n/a',
+                        'jsize' : '1-infinite',
+                        'nodes' : '0/1/0/1'}
 
         tmpfile = self.workspace.createFile(self.partPattern % pattern_args)
 
@@ -71,7 +86,8 @@ class SInfoTestCase(unittest.TestCase):
         self.workspace.appendToFile(self.partPattern % pattern_args, tmpfile)
         self.workspace.appendToFile(self.partPattern % pattern_args, tmpfile)
         
-        container = SInfoHandler.parse(tmpfile)
+        config = DummyConfig()
+        container = SInfoHandler.parsePartInfo(config, tmpfile)
         
         result = container['creamtest1'].state == 'Closed'
         result = result and container['creamtest2'].state == 'Production'
@@ -84,17 +100,44 @@ class SInfoTestCase(unittest.TestCase):
                         'state' : 'up',
                         'cpuinfo' : '2/2/0/4',
                         'maxcput' : '30:00',
-                        'defcput' : 'n/a'}
+                        'defcput' : 'n/a',
+                        'jsize' : '1-infinite',
+                        'nodes' : '0/1/0/1'}
 
         tmpfile = self.workspace.createFile(self.partPattern % pattern_args)
 
-        container = SInfoHandler.parse(tmpfile)
+        config = DummyConfig()
+        container = SInfoHandler.parsePartInfo(config, tmpfile)
         
         result = container['creamtest1'].freeCPU == 2
         result = result and container['creamtest1'].totalCPU == 4
         
         self.assertTrue(result)
 
+    def test_partition_maxslot_ok(self):
+
+        pattern_args = {'partid' : 'creamtest1',
+                        'state' : 'up',
+                        'cpuinfo' : '2/2/0/4',
+                        'maxcput' : '30:00',
+                        'defcput' : 'n/a',
+                        'jsize' : '1-10',
+                        'nodes' : '0/1/0/1'}
+
+        tmpfile = self.workspace.createFile(self.partPattern % pattern_args)
+        
+        pattern_args['partid'] = 'creamtest2'
+        pattern_args['jsize'] = '2'
+        
+        self.workspace.appendToFile(self.partPattern % pattern_args, tmpfile)
+
+        config = DummyConfig()
+        container = SInfoHandler.parsePartInfo(config, tmpfile)
+        
+        result = container['creamtest1'].slotsPerJob == 10
+        result = result and container['creamtest2'].slotsPerJob == 2
+        
+        self.assertTrue(result)
 
 
 if __name__ == '__main__':
