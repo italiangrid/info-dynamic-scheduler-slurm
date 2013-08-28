@@ -187,13 +187,16 @@ def parseJobInfo(container, filename=None):
     CommonUtils.parseStream(cmd, container)
 
 
-class JobInfoHandler(Thread):
+class ConfigInfoHandler(Thread):
 
-    def __init__(self, container):
+    def __init__(self):
         Thread.__init__(self)
         self.errList = list()
+        self.pRegex = re.compile('^\s*([^=\s]+)\s*=([^$]+)$')
+
         self.version = ''
-        self.vRegex = re.compile('[a-zA-Z]+\s*([0-9]+\.[0-9]+\.[0-9]+)')
+        self.selectType = 'select/linear'
+        self.selectParams = ''
         
     def setStream(self, stream):
         self.stream = stream
@@ -203,20 +206,32 @@ class JobInfoHandler(Thread):
         
         while line:
         
-            parsed = self.vRegex.search(line)
+            parsed = self.pRegex.match(line)
             if parsed:
-                self.version = parsed.group(1)
+                key = parsed.group(1).lower()
+                value = parsed.group(2).strip(' \n\t"')
+                
+                if key == 'slurm_version':
+                    self.version = value
+                
+                if key == 'selecttype':
+                    self.selectType = value
+                
+                if key == 'selecttypeparameters':
+                    self.selectParams = value
+                    
             
             line = self.stream.readline()
 
 
-def parseVersion():
+def parseConfiguration(filename=None):
     if filename:
         cmd = shlex.split('cat ' + filename)
     else:
-        cmd = shlex.split('scontrol -V')
+        cmd = shlex.split('scontrol show config')
     
-    container = VerInfoHandler(container)
+    container = ConfigInfoHandler()
     CommonUtils.parseStream(cmd, container)
-    return container.version
+    return container
+
 

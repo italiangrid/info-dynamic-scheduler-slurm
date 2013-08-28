@@ -31,6 +31,11 @@ class SControlTestCase(unittest.TestCase):
         self.jobPattern = '''JobId=%(jid)s Name=%(jname)s UserId=%(uid)s(0) GroupId=%(gid)s(0) Priority=4294901756 Account=(null) QOS=(null) JobState=%(jstate)s Reason=None Dependency=(null) Requeue=1 Restarts=0 BatchFlag=1 ExitCode=0:0 RunTime=00:01:00 TimeLimit=%(tlimit)s TimeMin=N/A SubmitTime=%(subtime)s EligibleTime=2013-08-26T11:54:52 StartTime=%(sttime)s EndTime=2013-08-26T11:55:52 PreemptTime=None SuspendTime=None SecsPreSuspend=0 Partition=%(pname)s AllocNode:Sid=cream-04:2682 ReqNodeList=(null) ExcNodeList=(null) NodeList=cream-42 BatchHost=cream-42 NumNodes=1 NumCPUs=%(ncpu)d CPUs/Task=1 ReqS:C:T=*:*:* MinCPUsNode=1 MinMemoryNode=0 MinTmpDiskNode=0 Features=(null) Gres=(null) Reservation=(null) Shared=0 Contiguous=0 Licenses=(null) Network=(null) Command=/root/test.sh WorkDir=/root
 '''
 
+        self.configPattern = '''Configuration data as of 2013-08-28T10:34:42
+SelectType              = %(seltype)s
+SelectTypeParameters    = %(selpar)s
+SLURM_VERSION           = %(version)s
+'''
 
     def test_scontrol_all_free(self):
     
@@ -81,6 +86,25 @@ class SControlTestCase(unittest.TestCase):
         ncpu, freecpu = SControlInfoHandler.parseCPUInfo(tmpfile)
 
         self.assertTrue(ncpu == 8 and freecpu == 4)
+
+
+    def test_scontrol_config_ok(self):
+    
+        pattern_args = {'version' : '2.6.0',
+                        'seltype' : 'select/cons_res',
+                        'selpar' : 'CR_CPU'}
+
+        tmpfile = self.workspace.createFile(self.configPattern % pattern_args)
+        
+        container = SControlInfoHandler.parseConfiguration(tmpfile)
+        
+        result = container.selectType == 'select/cons_res'
+        result = result and container.selectParams == 'CR_CPU'
+        result = result and container.version == '2.6.0'
+        
+        self.assertTrue(result)
+
+
 
 
 if __name__ == '__main__':

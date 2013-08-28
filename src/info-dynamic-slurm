@@ -83,7 +83,7 @@ def main():
             
         infoContainer = SInfoHandler.parse()
         
-        lrmsVer = SControlInfoHandler.parseVersion()
+        lrmsVer = SControlInfoHandler.parseConfiguration().version
         
     except Exception, ex:
         sys.stderr.write(str(ex) + '\n')
