@@ -83,7 +83,7 @@ def main():
             
         slurmCfg = SControlInfoHandler.parseConfiguration()
         
-        infoContainer = SInfoHandler.parsePartInfo(slurmCfp)
+        infoContainer = SInfoHandler.parsePartInfo(slurmCfg)
         
     except:
         sys.stderr.write(CommonUtils.errorMsgFromTrace())

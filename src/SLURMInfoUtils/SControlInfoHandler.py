@@ -225,11 +225,11 @@ class ConfigInfoHandler(Thread):
             line = self.stream.readline()
         
         if self.selectType == 'select/cons_res':
-            if self.selectParams == 'CR_CPU'
+            if self.selectParams == 'CR_CPU':
                 self.slotType = 'CPU'
-            if self.selectParams == 'CR_Socket'
+            if self.selectParams == 'CR_Socket':
                 self.slotType = 'SOCKET'
-            if self.selectParams == 'CR_Core'
+            if self.selectParams == 'CR_Core':
                 self.slotType = 'CORE'
 
 def parseConfiguration(filename=None):
