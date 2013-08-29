@@ -35,7 +35,8 @@ class SInfoTestCase(unittest.TestCase):
     def setUp(self):
         self.workspace = Workspace()
         
-        self.partPattern = "%(partid)s %(state)s %(cpuinfo)s %(maxcput)s %(defcput)s %(jsize)s %(nodes)s\n"
+        self.partPattern = "%(partid)s %(state)s %(cpuinfo)s %(maxcput)s %(defcput)s"
+        self.partPattern += " %(jsize)s %(nodes)s %(maxcpun)s %(sct)s\n"
 
 
     def test_partition_ok(self):
@@ -46,7 +47,9 @@ class SInfoTestCase(unittest.TestCase):
                         'maxcput' : '30:00',
                         'defcput' : 'n/a',
                         'jsize' : '1-infinite',
-                        'nodes' : '0/1/0/1'}
+                        'nodes' : '0/1/0/1',
+                        'maxcpun' : 'UNLIMITED',
+                        'sct' : '2:1:1'}
 
         tmpfile = self.workspace.createFile(self.partPattern % pattern_args)
 
@@ -76,7 +79,9 @@ class SInfoTestCase(unittest.TestCase):
                         'maxcput' : '30:00',
                         'defcput' : 'n/a',
                         'jsize' : '1-infinite',
-                        'nodes' : '0/1/0/1'}
+                        'nodes' : '0/1/0/1',
+                        'maxcpun' : 'UNLIMITED',
+                        'sct' : '2:1:1'}
 
         tmpfile = self.workspace.createFile(self.partPattern % pattern_args)
 
@@ -102,7 +107,9 @@ class SInfoTestCase(unittest.TestCase):
                         'maxcput' : '30:00',
                         'defcput' : 'n/a',
                         'jsize' : '1-infinite',
-                        'nodes' : '0/1/0/1'}
+                        'nodes' : '0/1/0/1',
+                        'maxcpun' : 'UNLIMITED',
+                        'sct' : '2:1:1'}
 
         tmpfile = self.workspace.createFile(self.partPattern % pattern_args)
 
@@ -114,7 +121,7 @@ class SInfoTestCase(unittest.TestCase):
         
         self.assertTrue(result)
 
-    def test_partition_maxslot_ok(self):
+    def test_maxslot_node_ok(self):
 
         pattern_args = {'partid' : 'creamtest1',
                         'state' : 'up',
@@ -122,7 +129,9 @@ class SInfoTestCase(unittest.TestCase):
                         'maxcput' : '30:00',
                         'defcput' : 'n/a',
                         'jsize' : '1-10',
-                        'nodes' : '0/1/0/1'}
+                        'nodes' : '0/1/0/1',
+                        'maxcpun' : 'UNLIMITED',
+                        'sct' : '2:1:1'}
 
         tmpfile = self.workspace.createFile(self.partPattern % pattern_args)
         
@@ -139,6 +148,62 @@ class SInfoTestCase(unittest.TestCase):
         
         self.assertTrue(result)
 
+
+    def test_maxslot_cr_cpu_ok(self):
+
+        pattern_args = {'partid' : 'creamtest1',
+                        'state' : 'up',
+                        'cpuinfo' : '2/2/0/4',
+                        'maxcput' : '30:00',
+                        'defcput' : 'n/a',
+                        'jsize' : '1-10',
+                        'nodes' : '0/1/0/1',
+                        'maxcpun' : 'UNLIMITED',
+                        'sct' : '2:2:1'}
+
+        tmpfile = self.workspace.createFile(self.partPattern % pattern_args)
+        
+        pattern_args['partid'] = 'creamtest2'
+        pattern_args['jsize'] = '2'
+        
+        self.workspace.appendToFile(self.partPattern % pattern_args, tmpfile)
+
+        config = DummyConfig()
+        config.slotType = 'CPU'
+        container = SInfoHandler.parsePartInfo(config, tmpfile)
+        
+        result = container['creamtest1'].slotsPerJob == 40
+        result = result and container['creamtest2'].slotsPerJob == 8
+        
+        self.assertTrue(result)
+
+    def test_maxslot_undef_ok(self):
+
+        pattern_args = {'partid' : 'creamtest1',
+                        'state' : 'up',
+                        'cpuinfo' : '2/2/0/4',
+                        'maxcput' : '30:00',
+                        'defcput' : 'n/a',
+                        'jsize' : '1-unlimited',
+                        'nodes' : '0/1/0/1',
+                        'maxcpun' : 'UNLIMITED',
+                        'sct' : '2:2:1'}
+
+        tmpfile = self.workspace.createFile(self.partPattern % pattern_args)
+        
+        pattern_args['partid'] = 'creamtest2'
+        pattern_args['jsize'] = '2'
+        
+        self.workspace.appendToFile(self.partPattern % pattern_args, tmpfile)
+
+        config = DummyConfig()
+        config.slotType = 'CPU'
+        container = SInfoHandler.parsePartInfo(config, tmpfile)
+        
+        result = container['creamtest1'].slotsPerJob == -1
+        result = result and container['creamtest2'].slotsPerJob == 8
+        
+        self.assertTrue(result)
 
 if __name__ == '__main__':
     unittest.main()

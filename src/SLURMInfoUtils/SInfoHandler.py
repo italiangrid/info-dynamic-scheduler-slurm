@@ -69,7 +69,7 @@ class PartitionInfoHandler(Thread):
                     
                 qTuple = line.split()
                 
-                if len(qTuple) <> 7:
+                if len(qTuple) <> 9:
                     self.errList.append("Wrong partition info column number: %d" % len(qTuple))
                     continue
                 
@@ -104,9 +104,36 @@ class PartitionInfoHandler(Thread):
                 except Exception, ex:
                     self.errList.append("Wrong format for partition job size: " + qTuple[5])
                     continue
-                    
-                if self.config.slotType == 'NODE':
+                
+                try:
+                    tmpl = qTuple[8].split(':')
+                    socketNum = int(tmpl[0])
+                    coreNum = int(tmpl[1])
+                    thrNum = int(tmpl[2])
+                except:
+                    self.errList.append("Wrong format for partition (S:C:T): " + qTuple[8])
+                    continue
+                
+                maxCPUNode = -1
+                try:
+                    if qTuple[7].lower() <> 'unlimited':
+                        maxCPUNode = int(qTuple[7])
+                except:
+                    continue
+                
+                #
+                # Very rough implementation
+                #
+                if maxNodes < 0:
+                    continue
+                elif self.config.slotType == 'NODE':
                     self.qtable[queue].slotsPerJob = maxNodes
+                elif self.config.slotType == 'CPU':
+                    self.qtable[queue].slotsPerJob = maxNodes * socketNum * coreNum * thrNum
+                elif self.config.slotType == 'SOCKET':
+                    self.qtable[queue].slotsPerJob = maxNodes * socketNum
+                elif self.config.slotType == 'CORE':
+                    self.qtable[queue].slotsPerJob = maxNodes * coreNum
                                 
             finally:
                 line = self.stream.readline()
@@ -121,7 +148,7 @@ def parsePartInfo(config, filename=None):
     if filename:
         cmd = shlex.split('cat ' + filename)
     else:
-        cmd = shlex.split('sinfo -h -o "%P %a %C %l %L %s %F"')
+        cmd = shlex.split('sinfo -h -o "%20P %5a %15C %15l %15L %15s %15F %15B %15z"')
     
     container = PartitionInfoHandler(config)
     CommonUtils.parseStream(cmd, container)
