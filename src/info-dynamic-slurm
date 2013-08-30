@@ -47,15 +47,6 @@ def main():
         if config["outputformat"] not in ["glue1", "glue2", "both"]:
             raise Exception("FATAL: Unknown output format specified in config file:%s" % config["outputformat"])
 
-        if not "glue1-static-file-CE" in config:
-            config["glue1-static-file-CE"] = "/var/lib/bdii/gip/ldif/static-file-CE.ldif"
-        
-        if not "glue2-static-file-computing-manager" in config:
-            config["glue2-static-file-computing-manager"] = "/var/lib/bdii/gip/ldif/ComputingManager.ldif"
-        
-        if not "glue2-static-file-computing-share" in config:
-            config["glue2-static-file-computing-share"] = "/var/lib/bdii/gip/ldif/ComputingShare.ldif"
-
         if not "bdii-configfile" in config:
             config["bdii-configfile"] = '/etc/bdii/bdii.conf'
             
@@ -73,18 +64,14 @@ def main():
         if config['outputformat'] <> "glue2":
 
             glue1QueueTable = CommonUtils.parseLdif(config["bdii-configfile"], 'GLUE1')
-            #glue1QueueTable = CommonUtils.fillinGLUE1QueueTable(config["glue1-static-file-CE"])
             for queue in glue1QueueTable.values():
                 allQueues.add(queue)
         
         if config['outputformat'] <> "glue1":
 
             glue2QueueTable, managerTable = CommonUtils.parseLdif(config["bdii-configfile"], 'GLUE2')
-            #glue2QueueTable = CommonUtils.fillinGLUE2QueueTable(config["glue2-static-file-computing-share"])
             for queue in glue2QueueTable.values():
                 allQueues.add(queue)
-            
-            #managerTable = CommonUtils.fillinManagerTable(config["glue2-static-file-computing-manager"])
             
         slurmCfg = SControlInfoHandler.parseConfiguration()
         

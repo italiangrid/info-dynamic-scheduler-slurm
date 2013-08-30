@@ -18,6 +18,7 @@ import sys
 import re
 import subprocess
 import traceback
+import glob
 from threading import Thread
 
 
@@ -84,6 +85,8 @@ def getBDIIConfig(bdiiConffile):
     finally:
         if cFile:
             cFile.close()
+    
+    return result
 
 
 glue1DNRegex = re.compile("dn:\s*GlueCEUniqueID\s*=\s*[^$]+")
@@ -104,13 +107,13 @@ def parseLdif(bdiiConffile, glueType):
     else:
         ldifDir = '/var/lib/bdii/gip/ldif'
     
-    ldifList = glob.glob(ldifDir + '*.ldif')
+    ldifList = glob.glob(ldifDir + '/*.ldif')
     
     if glueType =='GLUE1':
     
         result = dict()
         
-        for ldiFilename in ldifList:
+        for ldifFilename in ldifList:
         
             ldifFile = None
             currDN = None
@@ -125,7 +128,7 @@ def parseLdif(bdiiConffile, glueType):
                     
                     parsed = glue1QueueRegex.match(line)
                     if parsed and currDN:
-                        result[currDN] = tmpm.group(1).strip()
+                        result[currDN] = parsed.group(1).strip()
                         continue
                     
                     if len(line.strip()) == 0:
@@ -139,7 +142,7 @@ def parseLdif(bdiiConffile, glueType):
     
         result = (dict(), dict())
 
-        for ldiFilename in ldifList:
+        for ldifFilename in ldifList:
         
             ldifFile = None
             currDN1 = None
@@ -155,7 +158,7 @@ def parseLdif(bdiiConffile, glueType):
                     
                     parsed = glue2ShareRegex.match(line)
                     if parsed and currDN1:
-                        result[0][currDN1] = tmpm.group(1).strip()
+                        result[0][currDN1] = parsed.group(1).strip()
                         continue
                     
                     parsed = managerRegex.match(line)
@@ -165,7 +168,7 @@ def parseLdif(bdiiConffile, glueType):
                     
                     parsed = manAttrRegex.match(line)
                     if parsed and currDN2:
-                        result[1][currDN2] = tmpm.group(1).strip()
+                        result[1][currDN2] = parsed.group(1).strip()
                         continue
                     
                     if len(line.strip()) == 0:
