@@ -66,63 +66,117 @@ def parseStream(cmd, container):
         raise Exception(processErr)
 
 
-def readDNsAndAttr(filename, dnRE, queueRE):
-    dnsAndQueues = dict()
-    ldifFile = None
-    try:
+bdiiCfgRegex = re.compile('^\s*BDII_([^=\s]+)\s*=([^$]+)$')
+
+def getBDIIConfig(bdiiConffile):
+
+    result = dict()
     
-        ldifFile = open(filename)
+    cFile = None
+    try:
+        cFile = open(bdiiConffile)
         
-        for line in ldifFile.readlines():
-            
-            tmpm = dnRE.match(line)
-            if tmpm <> None:
-                currDN = line.strip()
-                continue
-                
-            tmpm = queueRE.match(line)
-            if tmpm <> None:
-                dnsAndQueues[currDN] = tmpm.group(1).strip()
-        
+        for line in cFile:
+            parsed = bdiiCfgRegex.match(line)
+            if parsed:
+                result[parsed.group(1).lower] = parsed.group(2).strip()
+
     finally:
-        if ldifFile:
-            ldifFile.close()
-
-    return dnsAndQueues
+        if cFile:
+            cFile.close()
 
 
-#
-# Create a HashTable of type <CE DN: queuename>
-#
 glue1DNRegex = re.compile("dn:\s*GlueCEUniqueID\s*=\s*[^$]+")
 glue1QueueRegex = re.compile("GlueCEName\s*:\s*([^$]+)")
 
-def fillinGLUE1QueueTable(ldifFilename):
-
-    return readDNsAndAttr(ldifFilename, glue1DNRegex, glue1QueueRegex)
-
-
-#
-# Create a HashTable of type <Share DN: queuename>
-#
 glue2DNRegex = re.compile("dn:\s*GLUE2ShareID\s*=\s*[^$]+")
-glue2QueueRegex = re.compile("GLUE2ComputingShareMappingQueue\s*:\s*([^$]+)")
+glue2ShareRegex = re.compile("GLUE2ComputingShareMappingQueue\s*:\s*([^$]+)")
 
-def fillinGLUE2QueueTable(ldifFilename):
-
-    return readDNsAndAttr(ldifFilename, glue2DNRegex, glue2QueueRegex)
-
-    
-#
-# Create a HashTable of type <managerDN: managerID>
-#
 managerRegex = re.compile("dn:\s*GLUE2ManagerId\s*=\s*[^$]+")
 manAttrRegex = re.compile("GLUE2ManagerID\s*:\s*([^$]+)")
 
-def fillinManagerTable(ldifFilename):
+def parseLdif(bdiiConffile, glueType):
 
-    return readDNsAndAttr(ldifFilename, managerRegex, manAttrRegex)
+    bdiiConfig = getBDIIConfig(bdiiConffile)
 
+    if 'ldif_dir' in bdiiConfig:
+        ldifDir = bdiiConfig['ldifDir']
+    else:
+        ldifDir = '/var/lib/bdii/gip/ldif'
+    
+    ldifList = glob.glob(ldifDir + '*.ldif')
+    
+    if glueType =='GLUE1':
+    
+        result = dict()
+        
+        for ldiFilename in ldifList:
+        
+            ldifFile = None
+            currDN = None
+            try:
+            
+                ldifFile = open(ldifFilename)
+                for line in ldifFile:
+                    parsed = glue1DNRegex.match(line)
+                    if parsed:
+                        currDN = line.strip()
+                        continue
+                    
+                    parsed = glue1QueueRegex.match(line)
+                    if parsed and currDN:
+                        result[currDN] = tmpm.group(1).strip()
+                        continue
+                    
+                    if len(line.strip()) == 0:
+                        currDN = None
+
+            finally:
+                if ldifFile:
+                    ldifFile.close()
+
+    else:
+    
+        result = (dict(), dict())
+
+        for ldiFilename in ldifList:
+        
+            ldifFile = None
+            currDN1 = None
+            currDN2 = None
+            try:
+            
+                ldifFile = open(ldifFilename)
+                for line in ldifFile:
+                    parsed = glue2DNRegex.match(line)
+                    if parsed:
+                        currDN1 = line.strip()
+                        continue
+                    
+                    parsed = glue2ShareRegex.match(line)
+                    if parsed and currDN1:
+                        result[0][currDN1] = tmpm.group(1).strip()
+                        continue
+                    
+                    parsed = managerRegex.match(line)
+                    if parsed:
+                        currDN2 = line.strip()
+                        continue
+                    
+                    parsed = manAttrRegex.match(line)
+                    if parsed and currDN2:
+                        result[1][currDN2] = tmpm.group(1).strip()
+                        continue
+                    
+                    if len(line.strip()) == 0:
+                        currDN1 = None
+                        currDN2 = None
+
+            finally:
+                if ldifFile:
+                    ldifFile.close()
+
+    return result
 
 def readConfigFile(configFile):
 

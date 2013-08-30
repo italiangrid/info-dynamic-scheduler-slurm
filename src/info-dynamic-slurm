@@ -55,6 +55,9 @@ def main():
         
         if not "glue2-static-file-computing-share" in config:
             config["glue2-static-file-computing-share"] = "/var/lib/bdii/gip/ldif/ComputingShare.ldif"
+
+        if not "bdii-configfile" in config:
+            config["bdii-configfile"] = '/etc/bdii/bdii.conf'
             
 
     except:
@@ -69,17 +72,19 @@ def main():
     try:
         if config['outputformat'] <> "glue2":
 
-            glue1QueueTable = CommonUtils.fillinGLUE1QueueTable(config["glue1-static-file-CE"])
+            glue1QueueTable = CommonUtils.parseLdif(config["bdii-configfile"], 'GLUE1')
+            #glue1QueueTable = CommonUtils.fillinGLUE1QueueTable(config["glue1-static-file-CE"])
             for queue in glue1QueueTable.values():
                 allQueues.add(queue)
         
         if config['outputformat'] <> "glue1":
 
-            glue2QueueTable = CommonUtils.fillinGLUE2QueueTable(config["glue2-static-file-computing-share"])
+            glue2QueueTable, managerTable = CommonUtils.parseLdif(config["bdii-configfile"], 'GLUE2')
+            #glue2QueueTable = CommonUtils.fillinGLUE2QueueTable(config["glue2-static-file-computing-share"])
             for queue in glue2QueueTable.values():
                 allQueues.add(queue)
             
-            managerTable = CommonUtils.fillinManagerTable(config["glue2-static-file-computing-manager"])
+            #managerTable = CommonUtils.fillinManagerTable(config["glue2-static-file-computing-manager"])
             
         slurmCfg = SControlInfoHandler.parseConfiguration()
         
