@@ -80,7 +80,7 @@ def getBDIIConfig(bdiiConffile):
         for line in cFile:
             parsed = bdiiCfgRegex.match(line)
             if parsed:
-                result[parsed.group(1).lower] = parsed.group(2).strip()
+                result[parsed.group(1).lower()] = parsed.group(2).strip()
 
     finally:
         if cFile:
@@ -103,7 +103,7 @@ def parseLdif(bdiiConffile, glueType):
     bdiiConfig = getBDIIConfig(bdiiConffile)
 
     if 'ldif_dir' in bdiiConfig:
-        ldifDir = bdiiConfig['ldifDir']
+        ldifDir = bdiiConfig['ldif_dir']
     else:
         ldifDir = '/var/lib/bdii/gip/ldif'
     
