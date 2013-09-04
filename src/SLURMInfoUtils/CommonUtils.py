@@ -113,6 +113,13 @@ def parseLdif(bdiiConffile, glueType):
     
         result = dict()
         
+        #
+        # Shortcut for old installations
+        #
+        scFilename = ldifDir + '/static-file-CE.ldif'
+        if scFilename in ldifList:
+            ldifList = [scFilename]
+        
         for ldifFilename in ldifList:
         
             ldifFile = None
@@ -141,6 +148,14 @@ def parseLdif(bdiiConffile, glueType):
     else:
     
         result = (dict(), dict())
+
+        #
+        # Shortcut for old installations
+        #
+        scFilename1 = ldifDir + '/ComputingManager.ldif'
+        scFilename2 = ldifDir + '/ComputingShare.ldif'
+        if scFilename1 in ldifList and scFilename2 in ldifList:
+            ldifList = [scFilename1, scFilename2]
 
         for ldifFilename in ldifList:
         
