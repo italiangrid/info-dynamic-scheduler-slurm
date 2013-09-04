@@ -19,6 +19,7 @@ import re
 import subprocess
 import traceback
 import glob
+import ConfigParser
 from threading import Thread
 
 
@@ -202,6 +203,8 @@ def readConfigFile(configFile):
     conffile = None
     config = dict()
     
+    newFormat = False
+    
     try:
     
         conffile = open(configFile)
@@ -211,12 +214,39 @@ def readConfigFile(configFile):
                 config[parsed.group(1)] = parsed.group(2).strip(' \n\t"')
             else:
                 tmps = line.strip()
-                if len(tmps) > 0 and not tmps.startswith('#'):
+                if tmps.startswith('['):
+                    newFormat = True
+                    break  
+                elif len(tmps) > 0 and not tmps.startswith('#'):
                     raise Exception("Error parsing configuration file " + configFile)
 
+        if newFormat:
+            conffile.seek(0)
+            tmpConf = ConfigParser.ConfigParser()
+            tmpConf.readfp(conffile)
+            
+            if tmpConf.has_option('Main','outputformat'):
+                config['outputformat'] = tmpConf.get('Main', 'outputformat')
+                
+            if tmpConf.has_option('Main','bdii-configfile'):
+                config['bdii-configfile'] = tmpConf.get('Main', 'bdii-configfile')
+                
     finally:
         if conffile:
             conffile.close()
+
+    if not "outputformat" in config:
+        if "GlueFormat" in config:
+            config["outputformat"] = config["GlueFormat"]
+        else:
+            config["outputformat"] = "both"
+    
+    if config["outputformat"] not in ["glue1", "glue2", "both"]:
+        raise Exception("FATAL: Unknown output format specified in config file:%s" % config["outputformat"])
+
+    if not "bdii-configfile" in config:
+        config["bdii-configfile"] = '/etc/bdii/bdii.conf'
+            
 
     return config
 
