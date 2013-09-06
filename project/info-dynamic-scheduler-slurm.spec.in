@@ -7,6 +7,7 @@ Vendor: EMI
 URL: http://glite.cern.ch/
 Group: Applications/Internet
 BuildArch: noarch
+Requires: dynsched-generic
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}.tar.gz
@@ -46,6 +47,20 @@ rm -rf %{buildroot}
 %{python_sitelib}/*.egg-info
 %endif
 %config(noreplace) /etc/lrms/slurm.conf
+
+%triggerin -- bdii
+INFOD_WRAP=/var/lib/bdii/gip/plugin/glite-info-dynamic-ce
+if [ ! -e ${INFOD_WRAP} ] ; then
+    cat << EOF > ${INFOD_WRAP}
+#!/bin/sh
+/usr/libexec/info-dynamic-slurm /etc/lrms/scheduler.conf
+EOF
+    chmod a+x ${INFOD_WRAP}
+
+fi
+
+%triggerin -- bdii
+rm -f /var/lib/bdii/gip/plugin/glite-info-dynamic-ce
 
 %changelog
 * Fri Aug 31 2012 CREAM group <cream-support@lists.infn.it> - @PKGVERSION@-@PKGRELEASE@
