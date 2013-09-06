@@ -59,7 +59,7 @@ EOF
 
 fi
 
-%triggerin -- bdii
+%triggerun -- bdii
 rm -f /var/lib/bdii/gip/plugin/glite-info-dynamic-ce
 
 %changelog
