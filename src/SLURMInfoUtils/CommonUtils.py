@@ -16,6 +16,7 @@
 
 import sys
 import re
+import shlex
 import subprocess
 import traceback
 import glob
@@ -231,6 +232,9 @@ def readConfigFile(configFile):
             if tmpConf.has_option('Main','bdii-configfile'):
                 config['bdii-configfile'] = tmpConf.get('Main', 'bdii-configfile')
                 
+            if tmpConf.has_option('WSInterface','status-probe'):
+                config['status-probe'] = tmpConf.get('WSInterface', 'status-probe')
+
     finally:
         if conffile:
             conffile.close()
@@ -301,5 +305,16 @@ def errorMsgFromTrace():
     
     return '%s (%s)' % (evalue, trMessage)
 
+def interfaceIsOff(config):
+    try:
+    
+        if 'status-probe' in config:
+            retcode = subprocess.call(shlex.split(config['status-probe']))
+            return retcode == 1 or retcode == 2:
+        
+    except:
+        pass
+    
+    return False
 
 

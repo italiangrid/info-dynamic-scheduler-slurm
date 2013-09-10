@@ -98,7 +98,11 @@ def main():
             if qInfo.slotsPerJob <> -1:
                 out.write('GlueCEPolicyMaxSlotsPerJob: %d\n' % qInfo.slotsPerJob)
 
-            out.write('GlueCEStateStatus: %s\n' % qInfo.state)
+            if CommonUtils.interfaceIsOff(config):
+                out.write('GlueCEStateStatus: Draining\n')
+            else:
+                out.write('GlueCEStateStatus: %s\n' % qInfo.state)
+
             out.write('\n')
     
     
@@ -129,7 +133,11 @@ def main():
             if qInfo.slotsPerJob <> -1:
                 out.write('GLUE2ComputingShareMaxSlotsPerJob: %d\n' % qInfo.slotsPerJob)
                 
-            out.write('GLUE2ComputingShareServingState: %s\n' % qInfo.state.lower())
+            if CommonUtils.interfaceIsOff(config):    
+                out.write('GLUE2ComputingShareServingState: draining\n')
+            else:
+                out.write('GLUE2ComputingShareServingState: %s\n' % qInfo.state.lower())
+
             out.write('GLUE2EntityCreationTime: %s\n' % now)
             out.write('\n')
 
