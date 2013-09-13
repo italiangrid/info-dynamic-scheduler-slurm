@@ -192,7 +192,7 @@ class ConfigInfoHandler(Thread):
     def __init__(self):
         Thread.__init__(self)
         self.errList = list()
-        self.pRegex = re.compile('^\s*([^=\s]+)\s*=([^$]+)$')
+        self.pRegex = re.compile('^\s*([^=\s]+)\s*=(.+)$')
 
         self.version = ''
         self.selectType = 'select/linear'

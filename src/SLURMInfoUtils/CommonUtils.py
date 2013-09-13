@@ -69,7 +69,7 @@ def parseStream(cmd, container):
         raise Exception(processErr)
 
 
-bdiiCfgRegex = re.compile('^\s*BDII_([^=\s]+)\s*=([^$]+)$')
+bdiiCfgRegex = re.compile('^\s*BDII_([^=\s]+)\s*=(.+)$')
 
 def getBDIIConfig(bdiiConffile):
 
@@ -91,14 +91,14 @@ def getBDIIConfig(bdiiConffile):
     return result
 
 
-glue1DNRegex = re.compile("dn:\s*GlueCEUniqueID\s*=\s*[^$]+")
-glue1QueueRegex = re.compile("GlueCEName\s*:\s*([^$]+)")
+glue1DNRegex = re.compile("dn:\s*GlueCEUniqueID\s*=\s*.+")
+glue1QueueRegex = re.compile("GlueCEName\s*:\s*(.+)")
 
-glue2DNRegex = re.compile("dn:\s*GLUE2ShareID\s*=\s*[^$]+")
-glue2ShareRegex = re.compile("GLUE2ComputingShareMappingQueue\s*:\s*([^$]+)")
+glue2DNRegex = re.compile("dn:\s*GLUE2ShareID\s*=\s*.+")
+glue2ShareRegex = re.compile("GLUE2ComputingShareMappingQueue\s*:\s*(.+)")
 
-managerRegex = re.compile("dn:\s*GLUE2ManagerId\s*=\s*[^$]+")
-manAttrRegex = re.compile("GLUE2ManagerID\s*:\s*([^$]+)")
+managerRegex = re.compile("dn:\s*GLUE2ManagerId\s*=\s*.+")
+manAttrRegex = re.compile("GLUE2ManagerID\s*:\s*(.+)")
 
 def parseLdif(bdiiConffile, glueType):
 
@@ -200,7 +200,7 @@ def parseLdif(bdiiConffile, glueType):
 
 def readConfigFile(configFile):
 
-    pRegex = re.compile('^\s*([^=\s]+)\s*=([^$]+)$')
+    pRegex = re.compile('^\s*([^=\s]+)\s*=(.+)$')
     conffile = None
     config = dict()
     
@@ -310,7 +310,7 @@ def interfaceIsOff(config):
     
         if 'status-probe' in config:
             retcode = subprocess.call(shlex.split(config['status-probe']))
-            return retcode == 1 or retcode == 2:
+            return retcode == 1 or retcode == 2
         
     except:
         pass
