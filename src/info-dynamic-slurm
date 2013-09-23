@@ -43,23 +43,18 @@ def main():
         sys.stderr.write(CommonUtils.errorMsgFromTrace())
         sys.exit(1)
 
-    glue1QueueTable = None
+    glue1CETable = None
     glue2QueueTable = None
     managerTable = None
-    allQueues = set()
     
     try:
         if config['outputformat'] <> "glue2":
 
-            glue1QueueTable = CommonUtils.parseLdif(config["bdii-configfile"], 'GLUE1')
-            for queue in glue1QueueTable.values():
-                allQueues.add(queue)
+            glue1CETable = CommonUtils.parseLdif(config["bdii-configfile"], 'GLUE1')
         
         if config['outputformat'] <> "glue1":
 
             glue2QueueTable, managerTable = CommonUtils.parseLdif(config["bdii-configfile"], 'GLUE2')
-            for queue in glue2QueueTable.values():
-                allQueues.add(queue)
             
         slurmCfg = SControlInfoHandler.parseConfiguration()
         
@@ -74,9 +69,10 @@ def main():
 
     if config['outputformat'] <> "glue2":
     
-        for glue1DN in glue1QueueTable:
+        for glue1CEData in glue1CETable.values():
         
-            queue = glue1QueueTable[glue1DN]
+            glue1DN = glue1CEData['dn']
+            queue = glue1CEData['queue']
             if not queue in infoContainer:
                 continue
             qInfo = infoContainer[queue]
@@ -104,6 +100,28 @@ def main():
                 out.write('GlueCEStateStatus: %s\n' % qInfo.state)
 
             out.write('\n')
+            
+            for glue1ViewData in glue1CEData['views']:
+                
+                viewDN = glue1ViewData[0]
+                voName = glue1ViewData[1]
+                
+                
+                out.write(viewDN + '\n')
+                out.write('GlueCEInfoTotalCPUs: %d\n' % qInfo.totalCPU)
+                out.write('GlueCEPolicyAssignedJobSlots: %d\n' % qInfo.totalCPU)
+                out.write('GlueCEStateFreeCPUs: %d\n' % qInfo.freeCPU)
+
+                if qInfo.defaultRuntime <> -1:
+                    out.write('GlueCEPolicyMaxWallClockTime: %d\n' % (qInfo.defaultRuntime / 60))
+
+                if qInfo.maxRuntime <> -1:
+                    out.write('GlueCEPolicyMaxObtainableWallClockTime: %d\n' % (qInfo.maxRuntime / 60))
+                
+                if qInfo.slotsPerJob <> -1:
+                    out.write('GlueCEPolicyMaxSlotsPerJob: %d\n' % qInfo.slotsPerJob)
+                
+                out.write('\n')
     
     
     

@@ -92,7 +92,8 @@ def getBDIIConfig(bdiiConffile):
 
 
 glue1DNRegex = re.compile("dn:\s*GlueCEUniqueID\s*=\s*.+")
-glue1QueueRegex = re.compile("GlueCEName\s*:\s*(.+)")
+glue1VODNRegex = re.compile("dn:\s*GlueVOViewLocalID\s*=\s*.+")
+glue1AttrRegex = re.compile("Glue([^:\s]+)\s*:\s*(.+)")
 
 glue2DNRegex = re.compile("dn:\s*GLUE2ShareID\s*=\s*.+")
 glue2ShareRegex = re.compile("GLUE2ComputingShareMappingQueue\s*:\s*(.+)")
@@ -122,31 +123,89 @@ def parseLdif(bdiiConffile, glueType):
         if scFilename in ldifList:
             ldifList = [scFilename]
         
+        currCEID = None
+        currCEDN = None
+        currQueue = None
+        currVODN = None
+        currVOName = None
+        currVORef = None
+
         for ldifFilename in ldifList:
         
             ldifFile = None
-            currDN = None
+            
             try:
             
                 ldifFile = open(ldifFilename)
                 for line in ldifFile:
                     parsed = glue1DNRegex.match(line)
                     if parsed:
-                        currDN = line.strip()
+                        currCEDN = line.strip()
                         continue
                     
-                    parsed = glue1QueueRegex.match(line)
-                    if parsed and currDN:
-                        result[currDN] = parsed.group(1).strip()
+                    parsed = glue1VODNRegex.match(line)
+                    if parsed:
+                        currVODN = line.strip()
+                        print 'Found VO dn ' + currVODN
                         continue
+
+                    parsed = glue1AttrRegex.match(line)
+                    if parsed:
+                        
+                        if parsed.group(1) == 'CEUniqueID':
+                            currCEID = parsed.group(2).strip()
+                            continue
                     
+                        if parsed.group(1) == 'CEName':
+                            currQueue = parsed.group(2).strip()
+                            continue
+
+                        if parsed.group(1) == 'VOViewLocalID':
+                            currVOName = parsed.group(2).strip()
+                            print 'Found VO id ' + currVOName
+                            continue
+                    
+                        if parsed.group(1) == 'ChunkKey':
+                            chunkKey = parsed.group(2).strip()
+                            if chunkKey.startswith('GlueCEUniqueID='):
+                                currVORef = chunkKey[15:]
+                                print 'Found VO ref ' + currVORef
+                            continue
+
                     if len(line.strip()) == 0:
-                        currDN = None
+                        if currCEID:
+                            if not currCEID in result:
+                                result[currCEID] = { 'views' : list() }
+                            result[currCEID]['dn'] = currCEDN
+                            result[currCEID]['queue'] = currQueue
+                        
+                        if currVORef:
+                            if not currVORef in result:
+                                result[currVORef] = { 'views' : list() }
+                            result[currVORef]['views'].append((currVODN, currVOName))
+                            
+                        currCEID = None
+                        currCEDN = None
+                        currQueue = None
+                        currVODN = None
+                        currVOName = None
+                        currVORef = None
 
             finally:
                 if ldifFile:
                     ldifFile.close()
-
+        
+        if currCEID:
+            if not currCEID in result:
+                result[currCEID] = { 'views' : list() }
+            result[currCEID]['dn'] = currCEDN
+            result[currCEID]['queue'] = currQueue
+                        
+        if currVORef:
+            if not currVORef in result:
+                result[currVORef] = { 'views' : list() }
+            result[currVORef]['views'].append((currVODN, currVOName))
+        
     else:
     
         result = (dict(), dict())
