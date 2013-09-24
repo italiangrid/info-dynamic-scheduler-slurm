@@ -198,6 +198,7 @@ class ConfigInfoHandler(Thread):
         self.selectType = 'select/linear'
         self.selectParams = ''
         self.slotType = 'NODE'
+        self.maxJobCount = 10000
         
     def setStream(self, stream):
         self.stream = stream
@@ -221,6 +222,8 @@ class ConfigInfoHandler(Thread):
                 if key == 'selecttypeparameters':
                     self.selectParams = value
                     
+                if key == 'maxjobcount':
+                    self.maxJobCount = int(value)
             
             line = self.stream.readline()
         
