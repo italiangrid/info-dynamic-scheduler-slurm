@@ -16,150 +16,41 @@
 # limitations under the License.
 
 import sys
-import re
-import time
-import shlex
-import subprocess
-from threading import Thread
 
-from SLURMInfoUtils import SInfoHandler
-from SLURMInfoUtils import CommonUtils
-from SLURMInfoUtils import SControlInfoHandler
-
-
+from SLURMInfoUtils import *
 
 
 def main():
     
-    now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    out = sys.stdout
 
+    if len(sys.argv) <> 2:
+        sys.stderr.write("Usage: info-dynamic-pbs <config-file>\n")
+        sys.exit(1)
+    
     try:
-        if len(sys.argv) <> 2:
-            raise Exception("Usage: info-dynamic-pbs <config-file>")
         
         config = CommonUtils.readConfigFile(sys.argv[1])
 
-    except:
-        sys.stderr.write(CommonUtils.errorMsgFromTrace())
-        sys.exit(1)
-
-    glue1CETable = None
-    glue2QueueTable = None
-    managerTable = None
-    
-    try:
-        if config['outputformat'] <> "glue2":
-
-            glue1CETable = CommonUtils.parseLdif(config["bdii-configfile"], 'GLUE1')
-        
-        if config['outputformat'] <> "glue1":
-
-            glue2QueueTable, managerTable = CommonUtils.parseLdif(config["bdii-configfile"], 'GLUE2')
-            
         slurmCfg = SControlInfoHandler.parseConfiguration()
         
         infoContainer = SInfoHandler.parsePartInfo(slurmCfg)
         
+        if slurmCfg.acctEnabled:
+            acctContainer = SAcctMgrHandler.parsePolicies()
+        else:
+            acctContainer = None
+            
+        if config['outputformat'] <> "glue2":
+            GLUE1Handler.process(config, out, infoContainer, acctContainer, slurmCfg)
+        
+        if config['outputformat'] <> "glue1":
+            GLUE2Handler.process(config, out, infoContainer, acctContainer, slurmCfg)
+        
     except:
-        sys.stderr.write(CommonUtils.errorMsgFromTrace())
-        sys.exit(1)
-
-
-    out = sys.stdout
-
-    if config['outputformat'] <> "glue2":
-    
-        for glue1CEData in glue1CETable.values():
+        sys.stderr.write(CommonUtils.errorMsgFromTrace() + '\n')
+        sys.exit(2)
         
-            glue1DN = glue1CEData['dn']
-            queue = glue1CEData['queue']
-            if not queue in infoContainer:
-                continue
-            qInfo = infoContainer[queue]
-            
-            out.write(glue1DN + '\n')
-
-            out.write('GlueCEInfoLRMSVersion: %s\n' % slurmCfg.version)
-
-            out.write('GlueCEInfoTotalCPUs: %d\n' % qInfo.totalCPU)
-            out.write('GlueCEPolicyAssignedJobSlots: %d\n' % qInfo.totalCPU)
-            out.write('GlueCEStateFreeCPUs: %d\n' % qInfo.freeCPU)
-
-            if qInfo.defaultRuntime <> -1:
-                out.write('GlueCEPolicyMaxWallClockTime: %d\n' % (qInfo.defaultRuntime / 60))
-
-            if qInfo.maxRuntime <> -1:
-                out.write('GlueCEPolicyMaxObtainableWallClockTime: %d\n' % (qInfo.maxRuntime / 60))
-                
-            if qInfo.slotsPerJob <> -1:
-                out.write('GlueCEPolicyMaxSlotsPerJob: %d\n' % qInfo.slotsPerJob)
-
-            if CommonUtils.interfaceIsOff(config):
-                out.write('GlueCEStateStatus: Draining\n')
-            else:
-                out.write('GlueCEStateStatus: %s\n' % qInfo.state)
-
-            out.write('\n')
-            
-            for glue1ViewData in glue1CEData['views']:
-                
-                viewDN = glue1ViewData[0]
-                voName = glue1ViewData[1]
-                
-                
-                out.write(viewDN + '\n')
-                out.write('GlueCEInfoTotalCPUs: %d\n' % qInfo.totalCPU)
-                out.write('GlueCEPolicyAssignedJobSlots: %d\n' % qInfo.totalCPU)
-                out.write('GlueCEStateFreeCPUs: %d\n' % qInfo.freeCPU)
-
-                if qInfo.defaultRuntime <> -1:
-                    out.write('GlueCEPolicyMaxWallClockTime: %d\n' % (qInfo.defaultRuntime / 60))
-
-                if qInfo.maxRuntime <> -1:
-                    out.write('GlueCEPolicyMaxObtainableWallClockTime: %d\n' % (qInfo.maxRuntime / 60))
-                
-                if qInfo.slotsPerJob <> -1:
-                    out.write('GlueCEPolicyMaxSlotsPerJob: %d\n' % qInfo.slotsPerJob)
-                
-                out.write('\n')
-    
-    
-    
-    if config['outputformat'] <> "glue1":
-    
-        for managerDN in managerTable:
-        
-            out.write(managerDN + '\n')
-            out.write('GLUE2ManagerProductVersion: %s\n' % slurmCfg.version)
-            out.write('GLUE2EntityCreationTime: %s\n' % now)
-            out.write('\n')
-
-        for glue2DN in glue2QueueTable:
-            queue = glue2QueueTable[glue2DN]
-            if not queue in infoContainer:
-                continue
-            qInfo = infoContainer[queue]
-            
-            out.write(glue2DN + '\n')
-            
-            if qInfo.defaultRuntime <> -1:
-                out.write('GLUE2ComputingShareDefaultWallTime: %d\n' % qInfo.defaultRuntime)
-                
-            if qInfo.maxRuntime <> -1:
-                out.write('GLUE2ComputingShareMaxWallTime: %d\n' % qInfo.maxRuntime)
-
-            if qInfo.slotsPerJob <> -1:
-                out.write('GLUE2ComputingShareMaxSlotsPerJob: %d\n' % qInfo.slotsPerJob)
-                
-            if CommonUtils.interfaceIsOff(config):    
-                out.write('GLUE2ComputingShareServingState: draining\n')
-            else:
-                out.write('GLUE2ComputingShareServingState: %s\n' % qInfo.state.lower())
-
-            out.write('GLUE2EntityCreationTime: %s\n' % now)
-            out.write('\n')
-
-
 
 if __name__ == "__main__":
     main()
