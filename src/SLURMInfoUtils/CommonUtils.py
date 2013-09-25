@@ -320,24 +320,24 @@ def convertTimeLimit(tstr):
     if len(tmpl) > 1:
         tmpl2 = tmpl[1].split(':')
         
-        if len(tmpl2) > 0:
-            return int(tmpl[0]) * 86400 + int(tmpl2[0]) * 3600
+        if len(tmpl2) > 2:
+            return int(tmpl[0]) * 86400 + int(tmpl2[0]) * 3600 + int(tmpl2[1]) * 60 + int(tmpl2[2])
         
         if len(tmpl2) > 1:
             return int(tmpl[0]) * 86400 + int(tmpl2[0]) * 3600 + int(tmpl2[1]) * 60
         
-        return int(tmpl[0]) * 86400 + int(tmpl2[0]) * 3600 + int(tmpl2[1]) * 60 + int(tmpl2[2])
+        return int(tmpl[0]) * 86400 + int(tmpl2[0]) * 3600
         
     else:
         tmpl2 = tmpl[0].split(':')
         
-        if len(tmpl2) > 0:
-            return int(tmpl2[0]) * 60
+        if len(tmpl2) > 2:
+            return int(tmpl2[0]) * 3600 + int(tmpl2[1]) *60 + int(tmpl2[2])
         
         if len(tmpl2) > 1:
             return int(tmpl2[0]) * 60 + int(tmpl2[1])
         
-        return int(tmpl2[0]) * 3600 + int(tmpl2[1]) *60 + int(tmpl2[2])
+        return int(tmpl2[0]) * 60
 
 
 def convertJobSize(sstr):

@@ -14,5 +14,10 @@
 # See the License for the specific language governing permissions and 
 # limitations under the License.
 
-__all__ = [ "SInfoHandler", "SControlInfoHandler", "CommonUtils" ]
+__all__ = [ "SInfoHandler",
+            "SControlInfoHandler",
+            "SAcctMgrHandler",
+            "GLUE1Handler",
+            "GLUE2Handler",
+            "CommonUtils" ]
 

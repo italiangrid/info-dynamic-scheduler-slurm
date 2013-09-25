@@ -199,6 +199,7 @@ class ConfigInfoHandler(Thread):
         self.selectParams = ''
         self.slotType = 'NODE'
         self.maxJobCount = 10000
+        self.acctEnabled = False
         
     def setStream(self, stream):
         self.stream = stream
@@ -224,6 +225,9 @@ class ConfigInfoHandler(Thread):
                     
                 if key == 'maxjobcount':
                     self.maxJobCount = int(value)
+                
+                if key == 'accountingstoragetype':
+                    self.acctEnabled = value == 'accounting_storage/slurmdbd'
             
             line = self.stream.readline()
         
