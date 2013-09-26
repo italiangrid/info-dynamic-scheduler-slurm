@@ -71,8 +71,8 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
             out.write('GlueCEStateFreeCPUs: %d\n' % ceFreeCPU)
             
         if ceMaxCPUTime <> -1:
-            out.write('GlueCEPolicyMaxCPUTime: %d\n' % ceMaxCPUTime)
-            out.write('GlueCEPolicyMaxObtainableCPUTime: %d\n' % ceMaxCPUTime)
+            out.write('GlueCEPolicyMaxCPUTime: %d\n' % (ceMaxCPUTime / 60))
+            out.write('GlueCEPolicyMaxObtainableCPUTime: %d\n' % (ceMaxCPUTime / 60))
             
         if ceMaxTotJobs <> -1:
             out.write('GlueCEPolicyMaxTotalJobs: %d\n' % ceMaxTotJobs)
@@ -150,9 +150,9 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
             if ceMaxWallTime <> -1:
                 out.write('GlueCEPolicyMaxObtainableWallClockTime: %d\n' % (ceMaxWallTime / 60))
                 
-            if maxCPUTime <> -1:
-                out.write('GlueCEPolicyMaxCPUTime: %d\n' % (maxCPUTime / 60))
-                out.write('GlueCEPolicyMaxObtainableCPUTime: %d\n' % (maxCPUTime / 60))
+            if vMaxCPUTime <> -1:
+                out.write('GlueCEPolicyMaxCPUTime: %d\n' % (vMaxCPUTime / 60))
+                out.write('GlueCEPolicyMaxObtainableCPUTime: %d\n' % (vMaxCPUTime / 60))
                 
             if ceSlotsPerJob <> -1:
                 out.write('GlueCEPolicyMaxSlotsPerJob: %d\n' % ceSlotsPerJob)

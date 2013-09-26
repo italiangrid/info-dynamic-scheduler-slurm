@@ -146,7 +146,6 @@ def parseLdif(bdiiConffile, glueType):
                     parsed = glue1VODNRegex.match(line)
                     if parsed:
                         currVODN = line.strip()
-                        print 'Found VO dn ' + currVODN
                         continue
 
                     parsed = glue1AttrRegex.match(line)
@@ -162,14 +161,12 @@ def parseLdif(bdiiConffile, glueType):
 
                         if parsed.group(1) == 'VOViewLocalID':
                             currVOName = parsed.group(2).strip()
-                            print 'Found VO id ' + currVOName
                             continue
                     
                         if parsed.group(1) == 'ChunkKey':
                             chunkKey = parsed.group(2).strip()
                             if chunkKey.startswith('GlueCEUniqueID='):
                                 currVORef = chunkKey[15:]
-                                print 'Found VO ref ' + currVORef
                             continue
 
                     if len(line.strip()) == 0:

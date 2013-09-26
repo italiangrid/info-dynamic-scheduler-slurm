@@ -37,6 +37,8 @@ class PolicyData:
         self.maxTotJobs = max(self.maxTotJobs, policyData.maxTotJobs)
         self.priority = min(self.priority, policyData.priority)
 
+VOGRP=0
+QUEUE=1
 class PolicyTable:
 
     def __init__(self):
@@ -44,19 +46,20 @@ class PolicyTable:
         
     def __getitem__(self, kTuple):
     
-        vogrp, queue = self._normTuple(kTuple)
+        nTuple = self._normTuple(kTuple)
         
-        if vogrp <> None and queue <> None:
-            return self.table[kTuple]
+        if nTuple[VOGRP] <> None and nTuple[QUEUE] <> None:
+            return self.table[nTuple]
         
-        if vogrp <> None or queue <> None:
-            if kTuple in self.table:
-                return self.table[kTuple]
+        if nTuple[VOGRP] <> None or nTuple[QUEUE] <> None:
+            if nTuple in self.table:
+                return self.table[nTuple]
                 
             foundKey = False
             tmpPol = PolicyData()
             for tmpt in self.table:
-                if (vogrp <> None and tmpt[0] == vogrp) or (queue <> None and tmpt[1] == queue):
+                if (nTuple[VOGRP] <> None and tmpt[0] == nTuple[VOGRP]) \
+                    or (nTuple[QUEUE] <> None and tmpt[1] == nTuple[QUEUE]):
                     foundKey = True
                     tmpPol.compAndSet(self.table[tmpt])
             if foundKey:
@@ -70,26 +73,26 @@ class PolicyTable:
     
     def __contains__(self, kTuple):
     
-        vogrp, queue = self._normTuple(kTuple)
+        nTuple = self._normTuple(kTuple)
         
-        if vogrp <> None and queue <> None:
-            return (vogrp, queue) in self.table
+        if nTuple[VOGRP] <> None and nTuple[QUEUE] <> None:
+            return nTuple in self.table
         
-        if vogrp <> None:
+        if nTuple[VOGRP] <> None:
             for tmpt in self.table:
-                if tmpt[0] == vogrp:
+                if tmpt[VOGRP] == nTuple[VOGRP]:
                     return True
 
-        if queue <> None:
+        if nTuple[QUEUE] <> None:
             for tmpt in self.table:
-                if tmpt[1] == queue:
+                if tmpt[QUEUE] == nTuple[QUEUE]:
                     return True
 
         return False
     
     def _normTuple(self, kTuple):
-        v = kTuple[0]
-        q = kTuple[1]
+        v = kTuple[VOGRP]
+        q = kTuple[QUEUE]
         if v <> None and len(v.strip()) == 0:
             v = None
         if q <> None and len(q.strip()) == 0:
@@ -160,9 +163,10 @@ class PolicyInfoHandler(Thread):
             vogrp = account
             
             if (vogrp, queue) in self.policyTable:
-                self.policyTable[vogrp, queue] = policy
-            else:
                 self.policyTable[vogrp, queue].compAndSet(policy)
+            else:
+                self.policyTable[vogrp, queue] = policy
+                
             
             line = self.stream.readline()
 
