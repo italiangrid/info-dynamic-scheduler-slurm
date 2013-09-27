@@ -96,10 +96,9 @@ glue1VODNRegex = re.compile("dn:\s*GlueVOViewLocalID\s*=\s*.+")
 glue1AttrRegex = re.compile("Glue([^:\s]+)\s*:\s*(.+)")
 
 glue2DNRegex = re.compile("dn:\s*GLUE2ShareID\s*=\s*.+")
-glue2ShareRegex = re.compile("GLUE2ComputingShareMappingQueue\s*:\s*(.+)")
+glue2AttrRegex = re.compile("GLUE2([^:\s]+)\s*:\s*(.+)")
 
 managerRegex = re.compile("dn:\s*GLUE2ManagerId\s*=\s*.+")
-manAttrRegex = re.compile("GLUE2ManagerID\s*:\s*(.+)")
 
 def parseLdif(bdiiConffile, glueType):
 
@@ -215,11 +214,17 @@ def parseLdif(bdiiConffile, glueType):
         if scFilename1 in ldifList and scFilename2 in ldifList:
             ldifList = [scFilename1, scFilename2]
 
+        currDN1 = None
+        currDN2 = None
+        currShare = None
+        currQueue = None
+        currVO = None
+        voKey = None
+
         for ldifFilename in ldifList:
         
             ldifFile = None
-            currDN1 = None
-            currDN2 = None
+            
             try:
             
                 ldifFile = open(ldifFilename)
@@ -229,28 +234,68 @@ def parseLdif(bdiiConffile, glueType):
                         currDN1 = line.strip()
                         continue
                     
-                    parsed = glue2ShareRegex.match(line)
-                    if parsed and currDN1:
-                        result[0][currDN1] = parsed.group(1).strip()
-                        continue
-                    
                     parsed = managerRegex.match(line)
                     if parsed:
                         currDN2 = line.strip()
                         continue
                     
-                    parsed = manAttrRegex.match(line)
-                    if parsed and currDN2:
-                        result[1][currDN2] = parsed.group(1).strip()
-                        continue
+                    parsed = glue2AttrRegex.match(line)
+                    if parsed:
+                    
+                        if parsed.group(1) == 'ComputingShareMappingQueue' and currDN1:
+                            currQueue = parsed.group(2).strip()
+                            continue
+                    
+                        if parsed.group(1) == 'ShareID':
+                            currShare = parsed.group(2).strip()
+                            continue
+                        
+                        if parsed.group(1) == 'PolicyUserDomainForeignKey':
+                            currVO = parsed.group(2).strip()
+                            continue
+                        
+                        if parsed.group(1) == 'MappingPolicyShareForeignKey':
+                            voKey = parsed.group(2).strip()
+                            continue
+                        
+                        if parsed.group(1) == 'ManagerID' and currDN2:
+                            result[1][currDN2] = parsed.group(2).strip()
+                            continue
                     
                     if len(line.strip()) == 0:
+                    
+                        if currShare:
+                            if not currShare in result[0]:
+                                result[0][currShare] = dict()
+                            result[0][currShare]['dn'] = currDN1
+                            result[0][currShare]['queue'] = currQueue
+                        
+                        if voKey:
+                            if not voKey in result[0]:
+                                result[0][voKey] = dict()
+                            result[0][voKey]['vo'] = currVO
+                        
                         currDN1 = None
                         currDN2 = None
+                        currShare = None
+                        currQueue = None
+                        currVO = None
+                        voKey = None
 
             finally:
                 if ldifFile:
                     ldifFile.close()
+
+        if currShare:
+            if not currShare in result[0]:
+                result[0][currShare] = dict()
+            result[0][currShare]['dn'] = currDN1
+            result[0][currShare]['queue'] = currQueue
+
+        if voKey:
+            if not voKey in result[0]:
+                result[0][voKey] = dict()
+            result[0][voKey]['vo'] = currVO
 
     return result
 
@@ -261,7 +306,8 @@ def readConfigFile(configFile):
     config = dict()
     
     newFormat = False
-    
+    vomap = dict()
+   
     try:
     
         conffile = open(configFile)
@@ -288,7 +334,6 @@ def readConfigFile(configFile):
             if tmpConf.has_option('Main','bdii-configfile'):
                 config['bdii-configfile'] = tmpConf.get('Main', 'bdii-configfile')
                 
-            vomap = dict()
             if tmpConf.has_option('Main','vomap'):
                 lines = tmpConf.get('Main','vomap').split('\n')
                 for line in lines:
@@ -297,7 +342,6 @@ def readConfigFile(configFile):
                         group = tmpl[0].strip()
                         vo = tmpl[1].strip()
                         vomap[group] = vo
-            config['vomap'] = vomap
 
             if tmpConf.has_option('WSInterface','status-probe'):
                 config['status-probe'] = tmpConf.get('WSInterface', 'status-probe')
@@ -305,6 +349,8 @@ def readConfigFile(configFile):
     finally:
         if conffile:
             conffile.close()
+
+    config['vomap'] = vomap
 
     if not "outputformat" in config:
         if "GlueFormat" in config:

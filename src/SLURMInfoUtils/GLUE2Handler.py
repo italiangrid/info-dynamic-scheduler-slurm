@@ -32,27 +32,73 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
         out.write('GLUE2EntityCreationTime: %s\n' % now)
         out.write('\n')
 
-    for glue2DN in glue2QueueTable:
-        queue = glue2QueueTable[glue2DN]
-        if not queue in infoContainer:
-            continue
-        qInfo = infoContainer[queue]
+    for glue2ShareData in glue2QueueTable.values():
+    
+        glue2DN = glue2ShareData['dn']
+        queue = glue2ShareData['queue']
+        voname = glue2ShareData['vo']
+                
+        defaultWallTime = -1
+        maxWallTime = -1
+        slotsPerJob = -1
+        queueState = 'UNDEFINED'
+        maxRunJobs = -1
+        maxTotJobs = -1
+        maxCPUTime = -1
             
+        #
+        # Retrieve infos from slurm core
+        #
+        if queue in infoContainer:
+            qInfo = infoContainer[queue]
+            
+            defaultWallTime = qInfo.defaultRuntime
+            maxWallTime = qInfo.maxRuntime
+            slotsPerJob = qInfo.slotsPerJob
+            queueState = qInfo.state.lower()
+
+        #
+        # Retrieve infos from accounting (if available)
+        #
+        if acctContainer <> None:
+            try:
+                policyData = acctContainer.policyTable[voname, queue]
+                defaultWallTime = policyData.maxWallTime               #???
+                maxWallTime = policyData.maxWallTime
+                maxRunJobs = policyData.maxRunJobs
+                maxTotJobs = policyData.maxTotJobs
+                maxCPUTime = policyData.maxCPUTime
+            except:
+                #
+                # TODO missing log
+                #
+                pass
+
         out.write(glue2DN + '\n')
             
-        if qInfo.defaultRuntime <> -1:
-            out.write('GLUE2ComputingShareDefaultWallTime: %d\n' % qInfo.defaultRuntime)
+        if maxCPUTime <> -1:
+            out.write('GLUE2ComputingShareDefaultCPUTime: %d\n' % maxCPUTime)
+            out.write('GLUE2ComputingShareMaxCPUTime: %d\n' % maxCPUTime)
                 
-        if qInfo.maxRuntime <> -1:
-            out.write('GLUE2ComputingShareMaxWallTime: %d\n' % qInfo.maxRuntime)
+        if defaultWallTime <> -1:
+            out.write('GLUE2ComputingShareDefaultWallTime: %d\n' % defaultWallTime)
+                
+        if maxWallTime <> -1:
+            out.write('GLUE2ComputingShareMaxWallTime: %d\n' % maxWallTime)
 
-        if qInfo.slotsPerJob <> -1:
-            out.write('GLUE2ComputingShareMaxSlotsPerJob: %d\n' % qInfo.slotsPerJob)
-                
-        if CommonUtils.interfaceIsOff(config):    
-            out.write('GLUE2ComputingShareServingState: draining\n')
-        else:
-            out.write('GLUE2ComputingShareServingState: %s\n' % qInfo.state.lower())
+        if slotsPerJob <> -1:
+            out.write('GLUE2ComputingShareMaxSlotsPerJob: %d\n' % slotsPerJob)
+        
+        if maxTotJobs <> -1:
+            out.write('GLUE2ComputingShareMaxTotalJobs: %d\n' % maxTotJobs)
+
+        if maxRunJobs <> -1:
+            out.write('GLUE2ComputingShareMaxRunningJobs: %d\n' % maxRunJobs)
+
+        if maxRunJobs <> -1  and maxTotJobs > maxRunJobs:
+            out.write('GLUE2ComputingShareMaxWaitingJobs: %d\n' % (maxTotJobs - maxRunJobs))
+                        
+        out.write('GLUE2ComputingShareServingState: %s\n' % queueState)
 
         out.write('GLUE2EntityCreationTime: %s\n' % now)
         out.write('\n')

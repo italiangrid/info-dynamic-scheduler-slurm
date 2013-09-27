@@ -55,6 +55,9 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
         # Retrieve infos from accounting (if available)
         #
         if acctContainer <> None:
+            #
+            # TODO
+            #
             pass
                 
 

@@ -38,6 +38,10 @@ class PolicyData:
         self.maxRunJobs = max(self.maxRunJobs, policyData.maxRunJobs)
         self.maxTotJobs = max(self.maxTotJobs, policyData.maxTotJobs)
         self.priority = min(self.priority, policyData.priority)
+        
+    def __repr__(self):
+        return "[%d %d %d %d %d %d]" % \
+        (self.maxWallTime, self.maxCPUTime, self.maxRunJobs, self.maxTotJobs, self.priority)
 
 VOGRP=0
 QUEUE=1
@@ -45,7 +49,7 @@ class PolicyTable:
 
     def __init__(self):
         self.table = dict()
-        
+    
     def __getitem__(self, kTuple):
     
         nTuple = self._normTuple(kTuple)
