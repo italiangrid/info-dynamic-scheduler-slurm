@@ -37,7 +37,7 @@ def main():
         infoContainer = SInfoHandler.parsePartInfo(slurmCfg)
         
         if slurmCfg.acctEnabled:
-            acctContainer = SAcctMgrHandler.parsePolicies()
+            acctContainer = SAcctMgrHandler.parsePolicies(vomap=config['vomap'], cluster=slurmCfg.clustername)
         else:
             acctContainer = None
             

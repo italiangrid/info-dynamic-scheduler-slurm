@@ -17,6 +17,8 @@
 import sys
 import shlex
 import subprocess
+import pwd
+import grp
 from threading import Thread
 
 from SLURMInfoUtils import CommonUtils
@@ -103,13 +105,27 @@ class PolicyTable:
 
 class PolicyInfoHandler(Thread):
 
-    def __init__(self):
+    def __init__(self, vomap, clustername):
         Thread.__init__(self)
         self.errList = list()
         self.policyTable = PolicyTable()
+        self.vomap = vomap
+        self.cluster = clustername
 
     def setStream(self, stream):
         self.stream = stream
+        
+    def getVOForUser(self, user):
+        try:
+        
+            grpgid = pwd.getpwnam(user)[3]
+            grpname = grp.getgrgid(grpgid)[0]
+            if grpname in self.vomap:
+                return self.vomap[grpname]
+            return grpname
+            
+        except:
+            return None
     
     def run(self):
     
@@ -127,58 +143,72 @@ class PolicyInfoHandler(Thread):
         while line:
             tmpl = line.strip().split('|')
             
-            account = tmpl[colIdx['account']]
-            userName = tmpl[colIdx['user']]
-            queue = tmpl[colIdx['partition']]
+            try:
+                clustername = tmpl[colIdx['cluster']]
+                account = tmpl[colIdx['account']]
+                userName = tmpl[colIdx['user']]
+                queue = tmpl[colIdx['partition']]
             
-            policy = PolicyData()
-            
-            tmps = tmpl[colIdx['maxwall']]
-            if tmps:
-                policy.maxWallTime = CommonUtils.convertTimeLimit(tmps)
-            
-            tmps = tmpl[colIdx['maxcpumins']]
-            if tmps:
-                policy.maxCPUTime = int(tmps) * 60
-            
-            tmps = tmpl[colIdx['maxjobs']]
-            if tmps:
-                policy.maxRunJobs = int(tmps)
-            
-            tmps = tmpl[colIdx['maxsubmit']]
-            if tmps:
-                policy.maxTotJobs = int(tmps)
-
-            tmps = tmpl[colIdx['share']]
-            #
-            # TODO missing priority for parent
-            #
-            if tmps and tmps <> 'parent':
-                policy.priority = int(tmps)
-
-            
-            #
-            # Let's assume the account is the vo name
-            #
-            vogrp = account
-            
-            if (vogrp, queue) in self.policyTable:
-                self.policyTable[vogrp, queue].compAndSet(policy)
-            else:
-                self.policyTable[vogrp, queue] = policy
+                if clustername <> self.cluster:
+                    continue
                 
+                policy = PolicyData()
             
-            line = self.stream.readline()
+                tmps = tmpl[colIdx['maxwall']]
+                if tmps:
+                    policy.maxWallTime = CommonUtils.convertTimeLimit(tmps)
+            
+                tmps = tmpl[colIdx['maxcpumins']]
+                if tmps:
+                    policy.maxCPUTime = int(tmps) * 60
+            
+                tmps = tmpl[colIdx['maxjobs']]
+                if tmps:
+                    policy.maxRunJobs = int(tmps)
+            
+                tmps = tmpl[colIdx['maxsubmit']]
+                if tmps:
+                    policy.maxTotJobs = int(tmps)
+
+                tmps = tmpl[colIdx['share']]
+                #
+                # TODO missing priority for parent
+                #
+                if tmps and tmps <> 'parent':
+                    policy.priority = int(tmps)
+
+                vogrp = self.getVOForUser(userName)
+                if not vogrp:
+                    continue
+            
+                if (vogrp, queue) in self.policyTable:
+                    self.policyTable[vogrp, queue].compAndSet(policy)
+                else:
+                    self.policyTable[vogrp, queue] = policy
+                
+            finally:
+                line = self.stream.readline()
 
 
 
 
 
 
-def parsePolicies():
+def parsePolicies(**argdict):
 
     cmd = shlex.split('sacctmgr -P show associations')
-    container = PolicyInfoHandler()
+    
+    if 'vomap' in argdict:
+        vomap = argdict['vomap']
+    else:
+        vomap = dict()
+    
+    if 'cluster' in argdict:
+        clustername = argdict['cluster']
+    else:
+        clustername = None
+    
+    container = PolicyInfoHandler(vomap, clustername)
     CommonUtils.parseStream(cmd, container)
     return container
 

@@ -200,6 +200,7 @@ class ConfigInfoHandler(Thread):
         self.slotType = 'NODE'
         self.maxJobCount = 10000
         self.acctEnabled = False
+        self.clustername = ''
         
     def setStream(self, stream):
         self.stream = stream
@@ -228,6 +229,9 @@ class ConfigInfoHandler(Thread):
                 
                 if key == 'accountingstoragetype':
                     self.acctEnabled = value == 'accounting_storage/slurmdbd'
+            
+                if key == 'clustername':
+                    self.clustername = value
             
             line = self.stream.readline()
         

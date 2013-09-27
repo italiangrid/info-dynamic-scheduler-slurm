@@ -22,9 +22,24 @@ from SLURMInfoUtils import CommonUtils
 from SLURMInfoUtils import SAcctMgrHandler
 from TestUtils import Workspace
 
+
+class MyPolicyInfoHandler(SAcctMgrHandler.PolicyInfoHandler):
+
+    def __init__(self,vomap, clustername):
+        SAcctMgrHandler.PolicyInfoHandler.__init__(self, vomap, clustername)
+    
+    def getVOForUser(self, user):
+        if user.startswith('dteam'):
+            return 'dteam'
+        if user.startswith('atlas'):
+            return 'atlas'
+        if user.startswith('alice'):
+            return 'alice'
+        return None
+
 def parsePolicies(filename):
     cmd = shlex.split('cat ' + filename)
-    container = SAcctMgrHandler.PolicyInfoHandler()
+    container = MyPolicyInfoHandler({}, 'clusteroncream04')
     CommonUtils.parseStream(cmd, container)
     return container
 
@@ -42,10 +57,10 @@ class SAcctMgrTestCase(unittest.TestCase):
     def test_policies_parsing_ok(self):
         
         tmpbuff = self.headerPattern
-        tmpbuff += 'clusteroncream04|padova|slurm|creamtest2|1||||||||20||||1-12|1440|normal|\n'
-        tmpbuff += 'clusteroncream04|padova|slurm|creamtest1|1||||||||20||||1-12|1440|normal|\n'
-        tmpbuff += 'clusteroncream04|padova|dteam|creamtest1|1||||||||20||||12:00:00|2880|normal|\n'
-        tmpbuff += 'clusteroncream04|padova|atlas||1||||||||20||||12:00:00|2880|normal|\n'
+        tmpbuff += 'clusteroncream04|alice|alice001|creamtest2|1||||||||20||||1-12|1440|normal|\n'
+        tmpbuff += 'clusteroncream04|alice|alice001|creamtest1|1||||||||20||||1-12|1440|normal|\n'
+        tmpbuff += 'clusteroncream04|dteam|dteam001|creamtest1|1||||||||20||||12:00:00|2880|normal|\n'
+        tmpbuff += 'clusteroncream04|atlas|atlas001||1||||||||20||||12:00:00|2880|normal|\n'
         
         tmpfile = self.workspace.createFile(tmpbuff)
         
@@ -53,7 +68,7 @@ class SAcctMgrTestCase(unittest.TestCase):
         
         
         try:
-            tmpPol = container.policyTable['slurm', 'creamtest2']
+            tmpPol = container.policyTable['alice', 'creamtest2']
             
             result = tmpPol.maxWallTime == 129600 and tmpPol.maxCPUTime == 86400
         
@@ -66,6 +81,8 @@ class SAcctMgrTestCase(unittest.TestCase):
             result = result and tmpPol.maxWallTime == 43200 and tmpPol.maxCPUTime == 172800
 
         except:
+            etype, evalue, etraceback = sys.exc_info()
+            sys.excepthook(etype, evalue, etraceback)
             result = False
         
         self.assertTrue(result)

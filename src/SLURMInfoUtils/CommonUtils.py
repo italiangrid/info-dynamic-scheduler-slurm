@@ -288,6 +288,17 @@ def readConfigFile(configFile):
             if tmpConf.has_option('Main','bdii-configfile'):
                 config['bdii-configfile'] = tmpConf.get('Main', 'bdii-configfile')
                 
+            vomap = dict()
+            if tmpConf.has_option('Main','vomap'):
+                lines = tmpConf.get('Main','vomap').split('\n')
+                for line in lines:
+                    tmpl = line.split(':')
+                    if len(tmpl) == 2:
+                        group = tmpl[0].strip()
+                        vo = tmpl[1].strip()
+                        vomap[group] = vo
+            config['vomap'] = vomap
+
             if tmpConf.has_option('WSInterface','status-probe'):
                 config['status-probe'] = tmpConf.get('WSInterface', 'status-probe')
 
