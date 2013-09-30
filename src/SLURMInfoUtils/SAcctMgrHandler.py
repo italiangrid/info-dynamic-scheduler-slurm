@@ -19,6 +19,7 @@ import shlex
 import subprocess
 import pwd
 import grp
+import logging
 from threading import Thread
 
 from SLURMInfoUtils import CommonUtils
@@ -106,7 +107,7 @@ class PolicyTable:
             q = None
         return (v, q)
 
-
+logger = logging.getLogger("SAcctMgrHandler")
 
 class PolicyInfoHandler(Thread):
 
@@ -122,7 +123,9 @@ class PolicyInfoHandler(Thread):
         
     def getVOForUser(self, user):
         try:
-        
+            if not user:
+                return None
+            
             grpgid = pwd.getpwnam(user)[3]
             grpname = grp.getgrgid(grpgid)[0]
             if grpname in self.vomap:
@@ -130,9 +133,7 @@ class PolicyInfoHandler(Thread):
             return grpname
             
         except:
-            #
-            # TODO missing log
-            #
+            logger.debug("Cannot find vo for %s", user, exc_info=True)
             return None
     
     def run(self):
@@ -142,6 +143,7 @@ class PolicyInfoHandler(Thread):
             line = self.stream.readline()
         
             while line:
+                logger.debug('Line: %s' % line)
                 tmpl = line.strip().split('|')
             
                 try:
@@ -174,11 +176,13 @@ class PolicyInfoHandler(Thread):
                         if userName:
                             policy.priority = int(tmps)
                         else:
+                            logger.debug("Set priority for %d to %s" % (assID, tmps))
                             self.prioTable[assID] = int(tmps)
                     elif tmps and tmps == 'parent':
                         if userName:
                             policy.priority = self.prioTable[parentID]
                         else:
+                            logger.debug("Inherited priority for %d from %d" % (assID, parentID))
                             self.prioTable[assID] = self.prioTable[parentID]
                 
                     vogrp = self.getVOForUser(userName)
@@ -186,14 +190,17 @@ class PolicyInfoHandler(Thread):
                         continue
             
                     if (vogrp, queue) in self.policyTable:
+                        logger.debug("Updating (%s,%s): %s" % (vogrp, queue, repr(policy)))
                         self.policyTable[vogrp, queue] += policy
                     else:
+                        logger.debug("Inserting (%s,%s): %s" % (vogrp, queue, repr(policy)))
                         self.policyTable[vogrp, queue] = policy
                 
                 finally:
                     line = self.stream.readline()
 
         except:
+            logger.error("Cannot parse info from accounting", exc_info=True)
             self.errList.append(CommonUtils.errorMsgFromTrace())
 
 

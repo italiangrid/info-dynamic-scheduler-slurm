@@ -16,10 +16,13 @@
 
 
 import time
+import logging
 
 from SLURMInfoUtils import CommonUtils
 
 def process(config, out, infoContainer, acctContainer, slurmCfg):
+    
+    logger = logging.getLogger("GLUE2Handler")
     
     now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
@@ -69,10 +72,7 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
                 maxTotJobs = policyData.maxTotJobs
                 maxCPUTime = policyData.maxCPUTime
             except:
-                #
-                # TODO missing log
-                #
-                pass
+                logger.debug("No policy from accounting", exc_info=True)
 
         out.write(glue2DN + '\n')
             

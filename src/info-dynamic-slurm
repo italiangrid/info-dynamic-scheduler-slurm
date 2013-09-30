@@ -16,6 +16,8 @@
 # limitations under the License.
 
 import sys
+import logging
+import logging.config
 
 from SLURMInfoUtils import *
 
@@ -25,8 +27,13 @@ def main():
     out = sys.stdout
 
     if len(sys.argv) <> 2:
-        sys.stderr.write("Usage: info-dynamic-pbs <config-file>\n")
+        sys.stderr.write("Usage: info-dynamic-slurm <config-file>\n")
         sys.exit(1)
+    
+    try:
+        logging.config.fileConfig(sys.argv[1])
+    except Exception, conf_log_err:
+        logging.basicConfig(stream=sys.stderr)
     
     try:
         

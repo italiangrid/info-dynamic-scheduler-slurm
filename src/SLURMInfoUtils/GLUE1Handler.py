@@ -14,12 +14,14 @@
 # See the License for the specific language governing permissions and 
 # limitations under the License.
 
-
+import logging
 
 from SLURMInfoUtils import CommonUtils
 
 def process(config, out, infoContainer, acctContainer, slurmCfg):
 
+    logger = logging.getLogger("GLUE1Handler")
+    
     glue1CETable = CommonUtils.parseLdif(config["bdii-configfile"], 'GLUE1')
     
     for glue1CEData in glue1CETable.values():
@@ -68,10 +70,7 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
             if policyData.priority <> CommonUtils.UNDEFPRIORITY:
                 cePriority = policyData.priority
         except:
-            #
-            # TODO missing log
-            #
-            pass
+            logger.debug("No policy from accounting", exc_info=True)
 
             
         out.write(glue1DN + '\n')
@@ -133,6 +132,7 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
                 vMaxTotJobs = tmpPol.maxTotJobs
                 vPriority = tmpPol.priority
             except:
+                logger.debug("No policy from accounting", exc_info=True)
                 vMaxWallTime = ceDefaultWallTime
                 vMaxCPUTime = ceMaxCPUTime
                 vMaxRunJobs = ceMaxRunJobs
