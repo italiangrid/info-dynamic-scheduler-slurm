@@ -38,13 +38,13 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
         queue = glue2ShareData['queue']
         voname = glue2ShareData['vo']
                 
-        defaultWallTime = -1
-        maxWallTime = -1
-        slotsPerJob = -1
+        defaultWallTime = CommonUtils.UNDEFMAXITEM
+        maxWallTime = CommonUtils.UNDEFMAXITEM
+        slotsPerJob = CommonUtils.UNDEFMAXITEM
         queueState = 'UNDEFINED'
-        maxRunJobs = -1
-        maxTotJobs = -1
-        maxCPUTime = -1
+        maxRunJobs = CommonUtils.UNDEFMAXITEM
+        maxTotJobs = CommonUtils.UNDEFMAXITEM
+        maxCPUTime = CommonUtils.UNDEFMAXITEM
             
         #
         # Retrieve infos from slurm core
@@ -76,26 +76,26 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
 
         out.write(glue2DN + '\n')
             
-        if maxCPUTime <> -1:
+        if maxCPUTime <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareDefaultCPUTime: %d\n' % maxCPUTime)
             out.write('GLUE2ComputingShareMaxCPUTime: %d\n' % maxCPUTime)
                 
-        if defaultWallTime <> -1:
+        if defaultWallTime <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareDefaultWallTime: %d\n' % defaultWallTime)
                 
-        if maxWallTime <> -1:
+        if maxWallTime <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareMaxWallTime: %d\n' % maxWallTime)
 
-        if slotsPerJob <> -1:
+        if slotsPerJob <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareMaxSlotsPerJob: %d\n' % slotsPerJob)
         
-        if maxTotJobs <> -1:
+        if maxTotJobs <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareMaxTotalJobs: %d\n' % maxTotJobs)
 
-        if maxRunJobs <> -1:
+        if maxRunJobs <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareMaxRunningJobs: %d\n' % maxRunJobs)
 
-        if maxRunJobs <> -1  and maxTotJobs > maxRunJobs:
+        if maxRunJobs <> CommonUtils.UNDEFMAXITEM  and maxTotJobs > maxRunJobs:
             out.write('GLUE2ComputingShareMaxWaitingJobs: %d\n' % (maxTotJobs - maxRunJobs))
                         
         out.write('GLUE2ComputingShareServingState: %s\n' % queueState)

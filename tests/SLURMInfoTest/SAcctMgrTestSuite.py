@@ -25,8 +25,8 @@ from TestUtils import Workspace
 
 class MyPolicyInfoHandler(SAcctMgrHandler.PolicyInfoHandler):
 
-    def __init__(self,vomap, clustername):
-        SAcctMgrHandler.PolicyInfoHandler.__init__(self, vomap, clustername)
+    def __init__(self,vomap):
+        SAcctMgrHandler.PolicyInfoHandler.__init__(self, vomap)
     
     def getVOForUser(self, user):
         if user.startswith('dteam'):
@@ -39,7 +39,7 @@ class MyPolicyInfoHandler(SAcctMgrHandler.PolicyInfoHandler):
 
 def parsePolicies(filename):
     cmd = shlex.split('cat ' + filename)
-    container = MyPolicyInfoHandler({}, 'clusteroncream04')
+    container = MyPolicyInfoHandler({})
     CommonUtils.parseStream(cmd, container)
     return container
 
@@ -48,19 +48,13 @@ class SAcctMgrTestCase(unittest.TestCase):
 
     def setUp(self):
         self.workspace = Workspace()
-        
-        self.headerPattern = 'Cluster|Account|User|Partition|'
-        self.headerPattern += 'Share|GrpJobs|GrpNodes|GrpCPUs|GrpMem|GrpSubmit|GrpWall|GrpCPUMins|'
-        self.headerPattern += 'MaxJobs|MaxNodes|MaxCPUs|MaxSubmit|MaxWall|MaxCPUMins|QOS|Def QOS\n'
-
 
     def test_policies_parsing_ok(self):
         
-        tmpbuff = self.headerPattern
-        tmpbuff += 'clusteroncream04|alice|alice001|creamtest2|1||||||||20||||1-12|1440|normal|\n'
-        tmpbuff += 'clusteroncream04|alice|alice001|creamtest1|1||||||||20||||1-12|1440|normal|\n'
-        tmpbuff += 'clusteroncream04|dteam|dteam001|creamtest1|1||||||||20||||12:00:00|2880|normal|\n'
-        tmpbuff += 'clusteroncream04|atlas|atlas001||1||||||||20||||12:00:00|2880|normal|\n'
+        tmpbuff =  'alice|alice001|creamtest2|1|20||1-12|1440\n'
+        tmpbuff += 'alice|alice001|creamtest1|1|20||1-12|1440\n'
+        tmpbuff += 'dteam|dteam001|creamtest1|1|20||12:00:00|2880\n'
+        tmpbuff += 'atlas|atlas001||1|20||12:00:00|2880\n'
         
         tmpfile = self.workspace.createFile(tmpbuff)
         

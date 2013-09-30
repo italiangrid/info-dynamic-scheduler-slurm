@@ -24,6 +24,11 @@ import ConfigParser
 from threading import Thread
 
 
+
+UNDEFPRIORITY=2147483647
+UNDEFMAXITEM=-1
+
+
 class ErrorHandler(Thread):
 
     def __init__(self, err_stream):

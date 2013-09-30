@@ -26,11 +26,11 @@ from SLURMInfoUtils import CommonUtils
 class PolicyData:
 
     def __init__(self):
-        self.maxWallTime = -1
-        self.maxCPUTime = -1
-        self.maxRunJobs = -1
-        self.maxTotJobs = -1
-        self.priority = 2147483647
+        self.maxWallTime = CommonUtils.UNDEFMAXITEM
+        self.maxCPUTime = CommonUtils.UNDEFMAXITEM
+        self.maxRunJobs = CommonUtils.UNDEFMAXITEM
+        self.maxTotJobs = CommonUtils.UNDEFMAXITEM
+        self.priority = CommonUtils.UNDEFPRIORITY
         
     def __iadd__(self, policyData):
         self.maxWallTime = max(self.maxWallTime, policyData.maxWallTime)
@@ -41,7 +41,7 @@ class PolicyData:
         return self
         
     def __repr__(self):
-        return "[%d %d %d %d %d %d]" % \
+        return "[%d %d %d %d %d]" % \
         (self.maxWallTime, self.maxCPUTime, self.maxRunJobs, self.maxTotJobs, self.priority)
 
 VOGRP=0
@@ -110,12 +110,11 @@ class PolicyTable:
 
 class PolicyInfoHandler(Thread):
 
-    def __init__(self, vomap, clustername):
+    def __init__(self, vomap):
         Thread.__init__(self)
         self.errList = list()
         self.policyTable = PolicyTable()
         self.vomap = vomap
-        self.cluster = clustername
 
     def setStream(self, stream):
         self.stream = stream
@@ -134,48 +133,35 @@ class PolicyInfoHandler(Thread):
     
     def run(self):
     
-        colIdx = dict()
-        
         line = self.stream.readline()
-        
-        if line:
-            idx = 0
-            for colName in line.strip().split('|'):
-                colIdx[colName.lower()] = idx
-                idx += 1
-            line = self.stream.readline()
         
         while line:
             tmpl = line.strip().split('|')
             
             try:
-                clustername = tmpl[colIdx['cluster']]
-                account = tmpl[colIdx['account']]
-                userName = tmpl[colIdx['user']]
-                queue = tmpl[colIdx['partition']]
+                account = tmpl[0]
+                userName = tmpl[1]
+                queue = tmpl[2]
             
-                if clustername <> self.cluster:
-                    continue
-                
                 policy = PolicyData()
             
-                tmps = tmpl[colIdx['maxwall']]
+                tmps = tmpl[6]
                 if tmps:
                     policy.maxWallTime = CommonUtils.convertTimeLimit(tmps)
             
-                tmps = tmpl[colIdx['maxcpumins']]
+                tmps = tmpl[7]
                 if tmps:
                     policy.maxCPUTime = int(tmps) * 60
             
-                tmps = tmpl[colIdx['maxjobs']]
+                tmps = tmpl[4]
                 if tmps:
                     policy.maxRunJobs = int(tmps)
             
-                tmps = tmpl[colIdx['maxsubmit']]
+                tmps = tmpl[5]
                 if tmps:
                     policy.maxTotJobs = int(tmps)
 
-                tmps = tmpl[colIdx['share']]
+                tmps = tmpl[3]
                 #
                 # TODO missing priority for parent
                 #
@@ -201,19 +187,20 @@ class PolicyInfoHandler(Thread):
 
 def parsePolicies(**argdict):
 
-    cmd = shlex.split('sacctmgr -P show associations')
-    
     if 'vomap' in argdict:
         vomap = argdict['vomap']
     else:
         vomap = dict()
     
     if 'cluster' in argdict:
-        clustername = argdict['cluster']
+        clusterArg = 'cluster=' + argdict['cluster']
     else:
-        clustername = None
+        clusterArg = ''
     
-    container = PolicyInfoHandler(vomap, clustername)
+    formatArg='format=Account,User,Partition,Fairshare,MaxJobs,MaxSubmitJobs,MaxWall,MaxCPUMins'
+    cmd = shlex.split('sacctmgr -Pn show associations %s %s' % (clusterArg, formatArg))
+    
+    container = PolicyInfoHandler(vomap)
     CommonUtils.parseStream(cmd, container)
     return container
 

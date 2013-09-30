@@ -27,16 +27,16 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
         glue1DN = glue1CEData['dn']
         queue = glue1CEData['queue']
             
-        ceDefaultWallTime = -1
-        ceMaxWallTime = -1
-        ceSlotsPerJob = -1
-        ceTotCPU = -1
-        ceFreeCPU = -1
+        ceDefaultWallTime = CommonUtils.UNDEFMAXITEM
+        ceMaxWallTime = CommonUtils.UNDEFMAXITEM
+        ceSlotsPerJob = CommonUtils.UNDEFMAXITEM
+        ceTotCPU = CommonUtils.UNDEFMAXITEM
+        ceFreeCPU = CommonUtils.UNDEFMAXITEM
         ceState = 'UNDEFINED'
-        cePriority = -1
-        ceMaxRunJobs = -1
-        ceMaxTotJobs = -1
-        ceMaxCPUTime = -1
+        cePriority = CommonUtils.UNDEFPRIORITY
+        ceMaxRunJobs = CommonUtils.UNDEFMAXITEM
+        ceMaxTotJobs = CommonUtils.UNDEFMAXITEM
+        ceMaxCPUTime = CommonUtils.UNDEFMAXITEM
             
         #
         # Retrieve infos from slurm core
@@ -56,14 +56,14 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
         #
         try:
             policyData = acctContainer.policyTable[None, queue]
-            if policyData.maxWallTime <> -1:
+            if policyData.maxWallTime <> CommonUtils.UNDEFMAXITEM:
                 ceDefaultWallTime = policyData.maxWallTime
                 ceMaxWallTime = policyData.maxWallTime
-            if policyData.maxRunJobs <> -1:
+            if policyData.maxRunJobs <> CommonUtils.UNDEFMAXITEM:
                 ceMaxRunJobs = policyData.maxRunJobs
-            if policyData.maxTotJobs <> -1:
+            if policyData.maxTotJobs <> CommonUtils.UNDEFMAXITEM:
                 ceMaxTotJobs = policyData.maxTotJobs
-            if policyData.maxCPUTime <> -1:
+            if policyData.maxCPUTime <> CommonUtils.UNDEFMAXITEM:
                 ceMaxCPUTime = policyData.maxCPUTime
         except:
             #
@@ -76,36 +76,36 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
 
         out.write('GlueCEInfoLRMSVersion: %s\n' % slurmCfg.version)
 
-        if ceTotCPU <> -1:
+        if ceTotCPU <> CommonUtils.UNDEFMAXITEM:
             out.write('GlueCEInfoTotalCPUs: %d\n' % ceTotCPU)
             out.write('GlueCEPolicyAssignedJobSlots: %d\n' % ceTotCPU)
             
-        if ceFreeCPU <> -1:
+        if ceFreeCPU <> CommonUtils.UNDEFMAXITEM:
             out.write('GlueCEStateFreeCPUs: %d\n' % ceFreeCPU)
             
-        if ceMaxCPUTime <> -1:
+        if ceMaxCPUTime <> CommonUtils.UNDEFMAXITEM:
             out.write('GlueCEPolicyMaxCPUTime: %d\n' % (ceMaxCPUTime / 60))
             out.write('GlueCEPolicyMaxObtainableCPUTime: %d\n' % (ceMaxCPUTime / 60))
             
         if ceMaxTotJobs <> -1:
             out.write('GlueCEPolicyMaxTotalJobs: %d\n' % ceMaxTotJobs)
             
-        if ceMaxRunJobs <> -1:
+        if ceMaxRunJobs <> CommonUtils.UNDEFMAXITEM:
             out.write('GlueCEPolicyMaxRunningJobs: %d\n' % ceMaxRunJobs)
             
-        if ceMaxRunJobs <> -1 and ceMaxTotJobs > ceMaxRunJobs:
+        if ceMaxRunJobs <> CommonUtils.UNDEFMAXITEM and ceMaxTotJobs > ceMaxRunJobs:
             out.write('GlueCEPolicyMaxWaitingJobs: %d\n' % (ceMaxTotJobs - ceMaxRunJobs))
             
-        if cePriority <> -1:
+        if cePriority <> CommonUtils.UNDEFPRIORITY:
             out.write('GlueCEPolicyPriority: %d\n' % cePriority)
 
-        if ceDefaultWallTime <> -1:
+        if ceDefaultWallTime <> CommonUtils.UNDEFMAXITEM:
             out.write('GlueCEPolicyMaxWallClockTime: %d\n' % (ceDefaultWallTime / 60))
 
-        if ceMaxWallTime <> -1:
+        if ceMaxWallTime <> CommonUtils.UNDEFMAXITEM:
             out.write('GlueCEPolicyMaxObtainableWallClockTime: %d\n' % (ceMaxWallTime / 60))
                 
-        if ceSlotsPerJob <> -1:
+        if ceSlotsPerJob <> CommonUtils.UNDEFMAXITEM:
             out.write('GlueCEPolicyMaxSlotsPerJob: %d\n' % ceSlotsPerJob)
 
         if CommonUtils.interfaceIsOff(config):
@@ -138,36 +138,36 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
                 vPriority = cePriority
                 
             out.write(viewDN + '\n')
-            if ceTotCPU <> -1:
+            if ceTotCPU <> CommonUtils.UNDEFMAXITEM:
                 out.write('GlueCEInfoTotalCPUs: %d\n' % ceTotCPU)
                 out.write('GlueCEPolicyAssignedJobSlots: %d\n' % ceTotCPU)
                 
-            if ceFreeCPU <> -1:
+            if ceFreeCPU <> CommonUtils.UNDEFMAXITEM:
                 out.write('GlueCEStateFreeCPUs: %d\n' % ceFreeCPU)
 
-            if vPriority <> -1:
+            if vPriority <> CommonUtils.UNDEFPRIORITY:
                 out.write('GlueCEPolicyPriority: %d\n' % vPriority)
                 
-            if vMaxRunJobs <> -1:
+            if vMaxRunJobs <> CommonUtils.UNDEFMAXITEM:
                 out.write('GlueCEPolicyMaxRunningJobs: %d\n' % vMaxRunJobs)
                 
-            if vMaxTotJobs <> -1:
+            if vMaxTotJobs <> CommonUtils.UNDEFMAXITEM:
                 out.write('GlueCEPolicyMaxTotalJobs: %d\n' % vMaxTotJobs)
                 
-            if vMaxRunJobs <> -1 and vMaxTotJobs > vMaxRunJobs:
+            if vMaxRunJobs <> CommonUtils.UNDEFMAXITEM and vMaxTotJobs > vMaxRunJobs:
                 out.write('GlueCEPolicyMaxWaitingJobs: %d\n' % (vMaxTotJobs - vMaxRunJobs))
 
-            if vMaxWallTime <> -1:
+            if vMaxWallTime <> CommonUtils.UNDEFMAXITEM:
                 out.write('GlueCEPolicyMaxWallClockTime: %d\n' % (vMaxWallTime / 60))
 
-            if ceMaxWallTime <> -1:
+            if ceMaxWallTime <> CommonUtils.UNDEFMAXITEM:
                 out.write('GlueCEPolicyMaxObtainableWallClockTime: %d\n' % (ceMaxWallTime / 60))
                 
-            if vMaxCPUTime <> -1:
+            if vMaxCPUTime <> CommonUtils.UNDEFMAXITEM:
                 out.write('GlueCEPolicyMaxCPUTime: %d\n' % (vMaxCPUTime / 60))
                 out.write('GlueCEPolicyMaxObtainableCPUTime: %d\n' % (vMaxCPUTime / 60))
                 
-            if ceSlotsPerJob <> -1:
+            if ceSlotsPerJob <> CommonUtils.UNDEFMAXITEM:
                 out.write('GlueCEPolicyMaxSlotsPerJob: %d\n' % ceSlotsPerJob)
                 
             out.write('\n')
