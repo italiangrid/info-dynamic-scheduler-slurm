@@ -37,11 +37,6 @@ class bdist_rpm(_bdist_rpm):
         execScript(shlex.split(cmdline)).communicate()
 
 
-libexec_list = [
-                "src/info-dynamic-slurm",
-                "src/lrmsinfo-slurm"
-               ]
-
 setup(
       name='info-dynamic-scheduler-slurm',
       version=pkg_version,
@@ -52,8 +47,7 @@ setup(
       packages=['SLURMInfoUtils'],
       package_dir = {'': 'src'},
       data_files=[
-                  ('etc/lrms', ['config/slurm.conf']),
-                  ('usr/libexec', libexec_list)
+                  ('usr/libexec', ["src/info-dynamic-slurm", "src/lrmsinfo-slurm"])
                  ],
       cmdclass={'bdist_rpm': bdist_rpm}
      )

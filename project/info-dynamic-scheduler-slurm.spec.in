@@ -46,7 +46,6 @@ rm -rf %{buildroot}
 %if 0%{?el6}
 %{python_sitelib}/*.egg-info
 %endif
-%config(noreplace) /etc/lrms/slurm.conf
 
 %triggerin -- bdii
 INFOD_WRAP=/var/lib/bdii/gip/plugin/glite-info-dynamic-ce

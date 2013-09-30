@@ -306,50 +306,33 @@ def parseLdif(bdiiConffile, glueType):
 
 def readConfigFile(configFile):
 
-    pRegex = re.compile('^\s*([^=\s]+)\s*=(.+)$')
     conffile = None
-    config = dict()
-    
-    newFormat = False
+    config = dict()    
     vomap = dict()
    
     try:
     
+        tmpConf = ConfigParser.ConfigParser()
         conffile = open(configFile)
-        for line in conffile:
-            parsed = pRegex.match(line)
-            if parsed:
-                config[parsed.group(1)] = parsed.group(2).strip(' \n\t"')
-            else:
-                tmps = line.strip()
-                if tmps.startswith('['):
-                    newFormat = True
-                    break  
-                elif len(tmps) > 0 and not tmps.startswith('#'):
-                    raise Exception("Error parsing configuration file " + configFile)
-
-        if newFormat:
-            conffile.seek(0)
-            tmpConf = ConfigParser.ConfigParser()
-            tmpConf.readfp(conffile)
+        tmpConf.readfp(conffile)
             
-            if tmpConf.has_option('Main','outputformat'):
-                config['outputformat'] = tmpConf.get('Main', 'outputformat')
+        if tmpConf.has_option('Main','outputformat'):
+            config['outputformat'] = tmpConf.get('Main', 'outputformat')
                 
-            if tmpConf.has_option('Main','bdii-configfile'):
-                config['bdii-configfile'] = tmpConf.get('Main', 'bdii-configfile')
+        if tmpConf.has_option('Main','bdii-configfile'):
+            config['bdii-configfile'] = tmpConf.get('Main', 'bdii-configfile')
                 
-            if tmpConf.has_option('Main','vomap'):
-                lines = tmpConf.get('Main','vomap').split('\n')
-                for line in lines:
-                    tmpl = line.split(':')
-                    if len(tmpl) == 2:
-                        group = tmpl[0].strip()
-                        vo = tmpl[1].strip()
-                        vomap[group] = vo
+        if tmpConf.has_option('Main','vomap'):
+            lines = tmpConf.get('Main','vomap').split('\n')
+            for line in lines:
+                tmpl = line.split(':')
+                if len(tmpl) == 2:
+                    group = tmpl[0].strip()
+                    vo = tmpl[1].strip()
+                    vomap[group] = vo
 
-            if tmpConf.has_option('WSInterface','status-probe'):
-                config['status-probe'] = tmpConf.get('WSInterface', 'status-probe')
+        if tmpConf.has_option('WSInterface','status-probe'):
+            config['status-probe'] = tmpConf.get('WSInterface', 'status-probe')
 
     finally:
         if conffile:
