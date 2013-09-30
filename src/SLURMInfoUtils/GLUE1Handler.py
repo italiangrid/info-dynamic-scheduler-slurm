@@ -65,6 +65,8 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
                 ceMaxTotJobs = policyData.maxTotJobs
             if policyData.maxCPUTime <> CommonUtils.UNDEFMAXITEM:
                 ceMaxCPUTime = policyData.maxCPUTime
+            if policyData.priority <> CommonUtils.UNDEFPRIORITY:
+                cePriority = policyData.priority
         except:
             #
             # TODO missing log

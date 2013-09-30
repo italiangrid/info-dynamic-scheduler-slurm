@@ -115,6 +115,7 @@ class PolicyInfoHandler(Thread):
         self.errList = list()
         self.policyTable = PolicyTable()
         self.vomap = vomap
+        self.prioTable = dict()
 
     def setStream(self, stream):
         self.stream = stream
@@ -129,60 +130,71 @@ class PolicyInfoHandler(Thread):
             return grpname
             
         except:
+            #
+            # TODO missing log
+            #
             return None
     
     def run(self):
     
-        line = self.stream.readline()
+        try:
         
-        while line:
-            tmpl = line.strip().split('|')
+            line = self.stream.readline()
+        
+            while line:
+                tmpl = line.strip().split('|')
             
-            try:
-                account = tmpl[0]
-                userName = tmpl[1]
-                queue = tmpl[2]
+                try:
+                    account = tmpl[0]
+                    userName = tmpl[1]
+                    queue = tmpl[2]
             
-                policy = PolicyData()
+                    policy = PolicyData()
             
-                tmps = tmpl[6]
-                if tmps:
-                    policy.maxWallTime = CommonUtils.convertTimeLimit(tmps)
+                    tmps = tmpl[6]
+                    if tmps:
+                        policy.maxWallTime = CommonUtils.convertTimeLimit(tmps)
             
-                tmps = tmpl[7]
-                if tmps:
-                    policy.maxCPUTime = int(tmps) * 60
+                    tmps = tmpl[7]
+                    if tmps:
+                        policy.maxCPUTime = int(tmps) * 60
             
-                tmps = tmpl[4]
-                if tmps:
-                    policy.maxRunJobs = int(tmps)
+                    tmps = tmpl[4]
+                    if tmps:
+                        policy.maxRunJobs = int(tmps)
             
-                tmps = tmpl[5]
-                if tmps:
-                    policy.maxTotJobs = int(tmps)
+                    tmps = tmpl[5]
+                    if tmps:
+                        policy.maxTotJobs = int(tmps)
 
-                tmps = tmpl[3]
-                #
-                # TODO missing priority for parent
-                #
-                if tmps and tmps <> 'parent':
-                    policy.priority = int(tmps)
-
-                vogrp = self.getVOForUser(userName)
-                if not vogrp:
-                    continue
-            
-                if (vogrp, queue) in self.policyTable:
-                    self.policyTable[vogrp, queue] += policy
-                else:
-                    self.policyTable[vogrp, queue] = policy
+                    assID = int(tmpl[8])
+                    parentID = int(tmpl[9])
+                    tmps = tmpl[3]
+                    if tmps and tmps <> 'parent':
+                        if userName:
+                            policy.priority = int(tmps)
+                        else:
+                            self.prioTable[assID] = int(tmps)
+                    elif tmps and tmps == 'parent':
+                        if userName:
+                            policy.priority = self.prioTable[parentID]
+                        else:
+                            self.prioTable[assID] = self.prioTable[parentID]
                 
-            finally:
-                line = self.stream.readline()
+                    vogrp = self.getVOForUser(userName)
+                    if not vogrp:
+                        continue
+            
+                    if (vogrp, queue) in self.policyTable:
+                        self.policyTable[vogrp, queue] += policy
+                    else:
+                        self.policyTable[vogrp, queue] = policy
+                
+                finally:
+                    line = self.stream.readline()
 
-
-
-
+        except:
+            self.errList.append(CommonUtils.errorMsgFromTrace())
 
 
 def parsePolicies(**argdict):
@@ -197,7 +209,7 @@ def parsePolicies(**argdict):
     else:
         clusterArg = ''
     
-    formatArg='format=Account,User,Partition,Fairshare,MaxJobs,MaxSubmitJobs,MaxWall,MaxCPUMins'
+    formatArg='format=Account,User,Partition,Fairshare,MaxJobs,MaxSubmitJobs,MaxWall,MaxCPUMins,ID,ParentID'
     cmd = shlex.split('sacctmgr -Pn show associations %s %s' % (clusterArg, formatArg))
     
     container = PolicyInfoHandler(vomap)
