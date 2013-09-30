@@ -32,12 +32,13 @@ class PolicyData:
         self.maxTotJobs = -1
         self.priority = 2147483647
         
-    def compAndSet(self, policyData):
+    def __iadd__(self, policyData):
         self.maxWallTime = max(self.maxWallTime, policyData.maxWallTime)
         self.maxCPUTime = max(self.maxCPUTime, policyData.maxCPUTime)
         self.maxRunJobs = max(self.maxRunJobs, policyData.maxRunJobs)
         self.maxTotJobs = max(self.maxTotJobs, policyData.maxTotJobs)
         self.priority = min(self.priority, policyData.priority)
+        return self
         
     def __repr__(self):
         return "[%d %d %d %d %d %d]" % \
@@ -67,7 +68,7 @@ class PolicyTable:
                 if (nTuple[VOGRP] <> None and tmpt[0] == nTuple[VOGRP]) \
                     or (nTuple[QUEUE] <> None and tmpt[1] == nTuple[QUEUE]):
                     foundKey = True
-                    tmpPol.compAndSet(self.table[tmpt])
+                    tmpPol += self.table[tmpt]
             if foundKey:
                 return tmpPol
         
@@ -186,7 +187,7 @@ class PolicyInfoHandler(Thread):
                     continue
             
                 if (vogrp, queue) in self.policyTable:
-                    self.policyTable[vogrp, queue].compAndSet(policy)
+                    self.policyTable[vogrp, queue] += policy
                 else:
                     self.policyTable[vogrp, queue] = policy
                 

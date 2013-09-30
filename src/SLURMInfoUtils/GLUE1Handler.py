@@ -54,12 +54,22 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
         #
         # Retrieve infos from accounting (if available)
         #
-        if acctContainer <> None:
+        try:
+            policyData = acctContainer.policyTable[None, queue]
+            if policyData.maxWallTime <> -1:
+                ceDefaultWallTime = policyData.maxWallTime
+                ceMaxWallTime = policyData.maxWallTime
+            if policyData.maxRunJobs <> -1:
+                ceMaxRunJobs = policyData.maxRunJobs
+            if policyData.maxTotJobs <> -1:
+                ceMaxTotJobs = policyData.maxTotJobs
+            if policyData.maxCPUTime <> -1:
+                ceMaxCPUTime = policyData.maxCPUTime
+        except:
             #
-            # TODO
+            # TODO missing log
             #
             pass
-                
 
             
         out.write(glue1DN + '\n')
