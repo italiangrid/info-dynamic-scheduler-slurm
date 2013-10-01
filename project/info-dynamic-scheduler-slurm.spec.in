@@ -7,7 +7,7 @@ Vendor: EMI
 URL: http://glite.cern.ch/
 Group: Applications/Internet
 BuildArch: noarch
-Requires: dynsched-generic
+Requires: dynsched-generic >= 2.5.3
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 AutoReqProv: yes
 Source: %{name}.tar.gz
@@ -46,6 +46,26 @@ rm -rf %{buildroot}
 %if 0%{?el6}
 %{python_sitelib}/*.egg-info
 %endif
+
+%post
+TMPVAR=`grep -Eo '\[LRMS\]' /etc/lrms/scheduler.conf`
+if [ "x${TMPVAR}" == "x" ] ; then
+
+    cat << EOF >> /etc/lrms/scheduler.conf
+[LRMS]
+lrms_backend_cmd: /usr/libexec/lrmsinfo-slurm
+[Scheduler]
+cycle_time : 0
+EOF
+
+fi
+
+%preun
+sed -i -e 's|\[LRMS\]||g' \
+       -e 's|lrms_backend_cmd.*||g' \
+       -e 's|\[Scheduler\]||g' \
+       -e 's|cycle_time.*||g' /etc/lrms/scheduler.conf
+
 
 %triggerin -- bdii
 INFOD_WRAP=/var/lib/bdii/gip/plugin/glite-info-dynamic-ce
