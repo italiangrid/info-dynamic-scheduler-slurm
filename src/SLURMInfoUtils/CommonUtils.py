@@ -21,6 +21,7 @@ import subprocess
 import traceback
 import glob
 import ConfigParser
+import logging
 from threading import Thread
 
 
@@ -28,6 +29,7 @@ from threading import Thread
 UNDEFPRIORITY=2147483647
 UNDEFMAXITEM=-1
 
+logger = logging.getLogger("CommonUtils")
 
 class ErrorHandler(Thread):
 
@@ -317,10 +319,14 @@ def readConfigFile(configFile):
         tmpConf.readfp(conffile)
             
         if tmpConf.has_option('Main','outputformat'):
-            config['outputformat'] = tmpConf.get('Main', 'outputformat')
+            config['outputformat'] = tmpConf.get('Main', 'outputformat').lower()
+        else:
+            config["outputformat"] = "both"
                 
         if tmpConf.has_option('Main','bdii-configfile'):
             config['bdii-configfile'] = tmpConf.get('Main', 'bdii-configfile')
+        else:
+            config["bdii-configfile"] = '/etc/bdii/bdii.conf'
                 
         if tmpConf.has_option('Main','vomap'):
             lines = tmpConf.get('Main','vomap').split('\n')
@@ -332,7 +338,7 @@ def readConfigFile(configFile):
                     vomap[group] = vo
 
         if tmpConf.has_option('WSInterface','status-probe'):
-            config['status-probe'] = tmpConf.get('WSInterface', 'status-probe')
+            config['status-probe'] = tmpConf.get('WSInterface', 'status-probe').strip('"\'')
 
     finally:
         if conffile:
@@ -340,18 +346,8 @@ def readConfigFile(configFile):
 
     config['vomap'] = vomap
 
-    if not "outputformat" in config:
-        if "GlueFormat" in config:
-            config["outputformat"] = config["GlueFormat"]
-        else:
-            config["outputformat"] = "both"
-    
     if config["outputformat"] not in ["glue1", "glue2", "both"]:
         raise Exception("FATAL: Unknown output format specified in config file:%s" % config["outputformat"])
-
-    if not "bdii-configfile" in config:
-        config["bdii-configfile"] = '/etc/bdii/bdii.conf'
-            
 
     return config
 
@@ -419,7 +415,7 @@ def interfaceIsOff(config):
             return retcode == 1 or retcode == 2
         
     except:
-        pass
+        logger.debug("Error running %s", config['status-probe'], exc_info=True)
     
     return False
 
