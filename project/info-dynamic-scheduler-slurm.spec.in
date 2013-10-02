@@ -81,6 +81,18 @@ fi
 %triggerun -- bdii
 rm -f /var/lib/bdii/gip/plugin/glite-info-dynamic-ce
 
+%triggerin -- glite-ce-cream-utils
+TMPVAR=`grep -Eo '\[WSInterface\]' /etc/lrms/scheduler.conf`
+if [ "x${TMPVAR}" == "x" ] ; then
+
+    cat << EOF >> /etc/lrms/scheduler.conf
+[WSInterface]
+status-probe : "/usr/libexec/glite-ce-check-submission-state /etc/glite-ce-dbtool/creamdb_min_access.conf"
+EOF
+
+fi
+
+
 %changelog
 * Fri Aug 31 2012 CREAM group <cream-support@lists.infn.it> - @PKGVERSION@-@PKGRELEASE@
 - New major release
