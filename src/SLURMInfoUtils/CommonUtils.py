@@ -70,6 +70,7 @@ def parseStream(cmd, container):
             processErr = container.errList[0]
 
     except:
+        logger.debug("Error running %s", repr(cmd), exc_info=True)
         raise Exception(errorMsgFromTrace())
 
     if processErr:

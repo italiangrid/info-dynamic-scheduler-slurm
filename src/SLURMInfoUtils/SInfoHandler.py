@@ -19,10 +19,12 @@ import re
 import time
 import shlex
 import subprocess
+import logging
 from threading import Thread
 
 import CommonUtils
 
+logger = logging.getLogger("SInfoHandler")
 
 class PartitionInfo:
 
@@ -31,6 +33,7 @@ class PartitionInfo:
         self.maxRuntime = -1
         self.defaultRuntime = -1
         self.totalCPU = 0
+        self.activeCPU = 0
         self.freeCPU = 0
         self.slotsPerJob = -1
 
@@ -39,10 +42,9 @@ class PartitionInfo:
 
 class PartitionInfoHandler(Thread):
 
-    def __init__(self, config):
+    def __init__(self):
         Thread.__init__(self)
         self.errList = list()
-        self.config = config
         self.qtable = dict()
         
         self.cpuRegex = re.compile('([0-9]+)/([0-9]+)/([0-9]+)/([0-9]+)')
@@ -91,6 +93,7 @@ class PartitionInfoHandler(Thread):
                     self.errList.append("Wrong format for partition cpu info: " + qTuple[2])
                     continue
                 self.qtable[queue].freeCPU = int(parsed.group(2))
+                self.qtable[queue].activeCPU = int(parsed.group(1)) + int(parsed.group(2))
                 self.qtable[queue].totalCPU = int(parsed.group(4))
                 
                 if qTuple[3] <> 'n/a':
@@ -98,42 +101,31 @@ class PartitionInfoHandler(Thread):
                 
                 if qTuple[4] <> 'n/a':
                     self.qtable[queue].defaultRuntime = CommonUtils.convertTimeLimit(qTuple[4])
-                
+                elif self.qtable[queue].maxRuntime <> -1:
+                    self.qtable[queue].defaultRuntime = self.qtable[queue].maxRuntime
+                    
                 try:
                     minNodes, maxNodes = CommonUtils.convertJobSize(qTuple[5])
-                except Exception, ex:
-                    self.errList.append("Wrong format for partition job size: " + qTuple[5])
-                    continue
-                
-                try:
-                    tmpl = qTuple[8].split(':')
-                    socketNum = int(tmpl[0])
-                    coreNum = int(tmpl[1])
-                    thrNum = int(tmpl[2])
-                except:
-                    self.errList.append("Wrong format for partition (S:C:T): " + qTuple[8])
-                    continue
-                
-                maxCPUNode = -1
-                try:
+                    
+                    if maxNodes < 0:
+                        continue
+                    
                     if qTuple[7].lower() <> 'unlimited':
+                    
                         maxCPUNode = int(qTuple[7])
-                except:
-                    continue
-                
-                #
-                # Very rough implementation
-                #
-                if maxNodes < 0:
-                    continue
-                elif self.config.slotType == 'NODE':
-                    self.qtable[queue].slotsPerJob = maxNodes
-                elif self.config.slotType == 'CPU':
-                    self.qtable[queue].slotsPerJob = maxNodes * socketNum * coreNum * thrNum
-                elif self.config.slotType == 'SOCKET':
-                    self.qtable[queue].slotsPerJob = maxNodes * socketNum
-                elif self.config.slotType == 'CORE':
-                    self.qtable[queue].slotsPerJob = maxNodes * coreNum
+                        self.qtable[queue].slotsPerJob = maxNodes * maxCPUNode
+                        
+                    else:
+                        tmpl = qTuple[8].split(':')
+                        socketNum = int(tmpl[0])
+                        coreNum = int(tmpl[1])
+                        thrNum = int(tmpl[2])
+                        self.qtable[queue].slotsPerJob = maxNodes * socketNum * coreNum * thrNum
+                        
+                except Exception, ex:
+                    logger.debug("Cannot calculate MaxSlotsPerJob for %s", queue, exc_info=True)
+                    self.errList.append("Cannot calculate MaxSlotsPerJob for %s" % queue)
+
                                 
             finally:
                 line = self.stream.readline()
@@ -143,14 +135,14 @@ class PartitionInfoHandler(Thread):
 
 
 
-def parsePartInfo(config, filename=None):
+def parsePartInfo(filename=None):
 
     if filename:
         cmd = shlex.split('cat ' + filename)
     else:
         cmd = shlex.split('sinfo -h -o "%20P %5a %15C %15l %15L %15s %15F %15B %15z"')
     
-    container = PartitionInfoHandler(config)
+    container = PartitionInfoHandler()
     CommonUtils.parseStream(cmd, container)
     return container
 

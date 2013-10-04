@@ -41,7 +41,7 @@ def main():
 
         slurmCfg = SControlInfoHandler.parseConfiguration()
         
-        infoContainer = SInfoHandler.parsePartInfo(slurmCfg)
+        infoContainer = SInfoHandler.parsePartInfo()
         
         if slurmCfg.acctEnabled:
             acctContainer = SAcctMgrHandler.parsePolicies(vomap=config['vomap'], cluster=slurmCfg.clustername)

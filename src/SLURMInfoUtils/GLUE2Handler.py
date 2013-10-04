@@ -66,11 +66,11 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
         if acctContainer <> None:
             try:
                 policyData = acctContainer.policyTable[voname, queue]
-                defaultWallTime = policyData.maxWallTime               #???
                 maxWallTime = policyData.maxWallTime
                 maxRunJobs = policyData.maxRunJobs
                 maxTotJobs = policyData.maxTotJobs
                 maxCPUTime = policyData.maxCPUTime
+                slotsPerJob = policyData.maxCPUPerJob
             except:
                 logger.debug("No policy from accounting", exc_info=True)
 

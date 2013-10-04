@@ -51,10 +51,10 @@ class SAcctMgrTestCase(unittest.TestCase):
 
     def test_policies_parsing_ok(self):
         
-        tmpbuff =  'alice|alice001|creamtest2|1|20||1-12|1440\n'
-        tmpbuff += 'alice|alice001|creamtest1|1|20||1-12|1440\n'
-        tmpbuff += 'dteam|dteam001|creamtest1|1|20||12:00:00|2880\n'
-        tmpbuff += 'atlas|atlas001||1|20||12:00:00|2880\n'
+        tmpbuff =  'alice|alice001|creamtest2|1|20||1-12|1440|2|601|600\n'
+        tmpbuff += 'alice|alice001|creamtest1|1|20||1-12|1440|2|602|600\n'
+        tmpbuff += 'dteam|dteam001|creamtest1|1|20||12:00:00|2880|2|701|700\n'
+        tmpbuff += 'atlas|atlas001||1|20||12:00:00|2880|4|801|800\n'
         
         tmpfile = self.workspace.createFile(tmpbuff)
         
@@ -64,15 +64,15 @@ class SAcctMgrTestCase(unittest.TestCase):
         try:
             tmpPol = container.policyTable['alice', 'creamtest2']
             
-            result = tmpPol.maxWallTime == 129600 and tmpPol.maxCPUTime == 86400
+            result = tmpPol.maxWallTime == 129600 and tmpPol.maxCPUTime == 86400 and tmpPol.maxCPUPerJob == 2
         
             tmpPol = container.policyTable[None, 'creamtest1']
             
-            result = result and tmpPol.maxWallTime == 129600 and tmpPol.maxCPUTime == 172800
+            result = result and tmpPol.maxWallTime == 129600 and tmpPol.maxCPUTime == 172800 and tmpPol.maxCPUPerJob == 2
             
             tmpPol = container.policyTable['atlas', None]
             
-            result = result and tmpPol.maxWallTime == 43200 and tmpPol.maxCPUTime == 172800
+            result = result and tmpPol.maxWallTime == 43200 and tmpPol.maxCPUTime == 172800 and tmpPol.maxCPUPerJob == 4
 
         except:
             etype, evalue, etraceback = sys.exc_info()

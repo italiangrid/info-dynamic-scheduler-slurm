@@ -54,6 +54,7 @@ class SInfoTestCase(unittest.TestCase):
         tmpfile = self.workspace.createFile(self.partPattern % pattern_args)
 
         pattern_args['partid'] = 'creamtest2*'
+        pattern_args['defcput'] = '15:00'
         
         self.workspace.appendToFile(self.partPattern % pattern_args, tmpfile)
         
@@ -61,11 +62,11 @@ class SInfoTestCase(unittest.TestCase):
         container = SInfoHandler.parsePartInfo(config, tmpfile)
         
         result = container['creamtest1'].maxRuntime == 1800
-        result = result and container['creamtest1'].defaultRuntime == -1
+        result = result and container['creamtest1'].defaultRuntime == 1800
         result = result and container['creamtest1'].state == 'Production'
         
         result = result and container['creamtest2'].maxRuntime == 1800
-        result = result and container['creamtest2'].defaultRuntime == -1
+        result = result and container['creamtest2'].defaultRuntime == 900
         result = result and container['creamtest2'].state == 'Production'
 
         self.assertTrue(result)
@@ -143,8 +144,8 @@ class SInfoTestCase(unittest.TestCase):
         config = DummyConfig()
         container = SInfoHandler.parsePartInfo(config, tmpfile)
         
-        result = container['creamtest1'].slotsPerJob == 10
-        result = result and container['creamtest2'].slotsPerJob == 2
+        result = container['creamtest1'].slotsPerJob == 20
+        result = result and container['creamtest2'].slotsPerJob == 4
         
         self.assertTrue(result)
 

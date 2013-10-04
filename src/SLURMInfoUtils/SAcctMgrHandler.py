@@ -29,6 +29,7 @@ class PolicyData:
     def __init__(self):
         self.maxWallTime = CommonUtils.UNDEFMAXITEM
         self.maxCPUTime = CommonUtils.UNDEFMAXITEM
+        self.maxCPUPerJob = CommonUtils.UNDEFMAXITEM
         self.maxRunJobs = CommonUtils.UNDEFMAXITEM
         self.maxTotJobs = CommonUtils.UNDEFMAXITEM
         self.priority = CommonUtils.UNDEFPRIORITY
@@ -36,14 +37,16 @@ class PolicyData:
     def __iadd__(self, policyData):
         self.maxWallTime = max(self.maxWallTime, policyData.maxWallTime)
         self.maxCPUTime = max(self.maxCPUTime, policyData.maxCPUTime)
+        self.maxCPUPerJob = max(self.maxCPUPerJob, policyData.maxCPUPerJob)
         self.maxRunJobs = max(self.maxRunJobs, policyData.maxRunJobs)
         self.maxTotJobs = max(self.maxTotJobs, policyData.maxTotJobs)
         self.priority = min(self.priority, policyData.priority)
         return self
         
     def __repr__(self):
-        return "[%d %d %d %d %d]" % \
-        (self.maxWallTime, self.maxCPUTime, self.maxRunJobs, self.maxTotJobs, self.priority)
+        return "[%d %d %d %d %d %d]" % \
+        (self.maxWallTime, self.maxCPUTime, self.maxCPUTime, \
+        self.maxRunJobs, self.maxTotJobs, self.priority)
 
 VOGRP=0
 QUEUE=1
@@ -161,6 +164,10 @@ class PolicyInfoHandler(Thread):
                     if tmps:
                         policy.maxCPUTime = int(tmps) * 60
             
+                    tmps = tmpl[8]
+                    if tmps:
+                        policy.maxCPUPerJob = int(tmps)
+
                     tmps = tmpl[4]
                     if tmps:
                         policy.maxRunJobs = int(tmps)
@@ -169,8 +176,8 @@ class PolicyInfoHandler(Thread):
                     if tmps:
                         policy.maxTotJobs = int(tmps)
 
-                    assID = int(tmpl[8])
-                    parentID = int(tmpl[9])
+                    assID = int(tmpl[9])
+                    parentID = int(tmpl[10])
                     tmps = tmpl[3]
                     if tmps and tmps <> 'parent':
                         if userName:
@@ -216,7 +223,9 @@ def parsePolicies(**argdict):
     else:
         clusterArg = ''
     
-    formatArg='format=Account,User,Partition,Fairshare,MaxJobs,MaxSubmitJobs,MaxWall,MaxCPUMins,ID,ParentID'
+    formatArg='format=Account,User,Partition,'
+    formatArg += 'Fairshare,MaxJobs,MaxSubmitJobs,MaxWall,MaxCPUMins,MaxCPUs,ID,ParentID'
+    
     cmd = shlex.split('sacctmgr -Pn show associations %s %s' % (clusterArg, formatArg))
     
     container = PolicyInfoHandler(vomap)
