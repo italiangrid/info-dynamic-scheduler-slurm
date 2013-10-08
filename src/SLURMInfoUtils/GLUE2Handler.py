@@ -48,6 +48,8 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
         maxRunJobs = CommonUtils.UNDEFMAXITEM
         maxTotJobs = CommonUtils.UNDEFMAXITEM
         maxCPUTime = CommonUtils.UNDEFMAXITEM
+        ceFreeCPU = CommonUtils.UNDEFMAXITEM
+        ceActiveCPU = CommonUtils.UNDEFMAXITEM
             
         #
         # Retrieve infos from slurm core
@@ -59,6 +61,8 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
             maxWallTime = qInfo.maxRuntime
             slotsPerJob = qInfo.slotsPerJob
             queueState = qInfo.state.lower()
+            ceFreeCPU = qInfo.freeCPU
+            ceActiveCPU = qInfo.activeCPU
 
         #
         # Retrieve infos from accounting (if available)
@@ -98,6 +102,12 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
         if maxRunJobs <> CommonUtils.UNDEFMAXITEM  and maxTotJobs > maxRunJobs:
             out.write('GLUE2ComputingShareMaxWaitingJobs: %d\n' % (maxTotJobs - maxRunJobs))
                         
+        if ceFreeCPU <> CommonUtils.UNDEFMAXITEM:
+            out.write('GLUE2ComputingShareFreeSlots: %d\n' % ceFreeCPU)
+        
+        if ceActiveCPU <> CommonUtils.UNDEFMAXITEM:
+            out.write('GLUE2ComputingShareUsedSlots: %d\n' % ceActiveCPU)
+
         out.write('GLUE2ComputingShareServingState: %s\n' % queueState)
 
         out.write('GLUE2EntityCreationTime: %s\n' % now)
