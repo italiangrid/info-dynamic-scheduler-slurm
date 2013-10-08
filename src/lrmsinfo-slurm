@@ -48,13 +48,11 @@ def main():
                 infile = optValue
         
         #
-        # TODO resource info (cpu num) must be handled by the info-dynamic plugin
+        # Resource info (cpu num) must be handled by the info-dynamic plugin
         #
-        ncpu, freecpu = SControlInfoHandler.parseCPUInfo(infile)
-        sys.stdout.write("nactive      %d\n" % ncpu)
-        # workaround: the generic infoprov cannot publish the total free slots
-        # this is up to the info-dynamic plugin
-        sys.stdout.write("nfree        -1\n")
+        #ncpu, freecpu = SControlInfoHandler.parseCPUInfo(infile)
+        #sys.stdout.write("nactive      %d\n" % ncpu)
+        #sys.stdout.write("nfree        %d\n" % freecpu)
         # timestamp refers to UTC
         sys.stdout.write("now          %d\n" % int(time.time() + time.timezone))
         #
