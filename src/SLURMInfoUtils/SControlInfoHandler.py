@@ -106,7 +106,7 @@ class JobInfoHandler(Thread):
     def convertTime(self, tstr):
         if tstr == 'Unknown':
             return 0
-        return int(time.mktime(time.strptime(tstr, '%Y-%m-%dT%H:%M:%S')))
+        return int(time.mktime(time.strptime(tstr, '%Y-%m-%dT%H:%M:%S')) + time.timezone)
     
     
     def run(self):
