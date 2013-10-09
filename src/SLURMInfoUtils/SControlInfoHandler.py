@@ -254,3 +254,94 @@ def parseConfiguration(filename=None):
     return container
 
 
+
+
+
+
+
+
+
+
+
+class PartitionInfo:
+
+    def __init__(self):
+        self.maxMem = -1
+        self.defaultMem = -1
+
+    def __str__(self):
+        return "%d %d" % (self.maxMem, self.defaultMem)
+
+
+class PartitionInfoHandler(Thread):
+
+    def __init__(self):
+        Thread.__init__(self)
+        self.errList = list()
+        self.qtable = dict()
+        
+        self.partRegex = re.compile('PartitionName=([^\s]+)')
+        self.maxMemRegex = re.compile('MaxMemPerNode=([0-9]+)')
+        self.defMemRegex = re.compile('DefMemPerNode=([0-9]+)')
+        self.maxNodeRegex = re.compile('MaxNodes=([0-9]+)')
+        
+    def setStream(self, stream):
+        self.stream = stream
+
+    def __getitem__(self, idx):
+        return self.qtable[idx]
+        
+    def __contains__(self, item):
+        return item in self.qtable
+    
+    def run(self):
+        line = self.stream.readline()
+        
+        while line:
+            try:
+
+                maxMem = -1
+                defaultMem = -1
+                maxNodes = -1
+                
+                parsed = self.partRegex.search(line)
+                if not parsed:
+                    continue
+                queue = parsed.group(1)
+
+                parsed = self.maxMemRegex.search(line)
+                if parsed:
+                    maxMem = int(parsed.group(1))                    
+
+                parsed = self.defMemRegex.search(line)
+                if parsed:
+                    defaultMem = int(parsed.group(1))
+
+                parsed = self.maxNodeRegex.search(line)
+                if parsed:
+                    maxNodes = int(parsed.group(1))
+                
+                if not queue in self.qtable:
+                    self.qtable[queue] = PartitionInfo()
+                
+                if maxMem <> -1 and maxNodes <> -1:
+                    self.qtable[queue].maxMem = maxMem * maxNodes
+                if defaultMem <> -1 and maxNodes <> -1:
+                    self.qtable[queue].defaultMem = defaultMem * maxNodes
+
+            finally:
+                line = self.stream.readline()
+
+    # end of thread
+
+def parsePartInfo(filename=None):
+
+    if filename:
+        cmd = shlex.split('cat ' + filename)
+    else:
+        cmd = shlex.split('scontrol -o show partitions')
+    
+    container = PartitionInfoHandler()
+    CommonUtils.parseStream(cmd, container)
+    return container
+

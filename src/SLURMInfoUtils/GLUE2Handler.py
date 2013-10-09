@@ -14,14 +14,16 @@
 # See the License for the specific language governing permissions and 
 # limitations under the License.
 
-
+import sys
 import time
 import logging
 
 from SLURMInfoUtils import CommonUtils
 
-def process(config, out, infoContainer, acctContainer, slurmCfg):
+def process(config, infoContainer, memInfoContainer, acctContainer, slurmCfg):
     
+    out = sys.stdout
+
     logger = logging.getLogger("GLUE2Handler")
     
     now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -50,6 +52,7 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
         maxCPUTime = CommonUtils.UNDEFMAXITEM
         ceFreeCPU = CommonUtils.UNDEFMAXITEM
         ceActiveCPU = CommonUtils.UNDEFMAXITEM
+        maxMem = CommonUtils.UNDEFMAXITEM
             
         #
         # Retrieve infos from slurm core
@@ -63,6 +66,9 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
             queueState = qInfo.state.lower()
             ceFreeCPU = qInfo.freeCPU
             ceActiveCPU = qInfo.activeCPU
+
+        if queue in memInfoContainer:
+            maxMem = memInfoContainer[queue].maxMem
 
         #
         # Retrieve infos from accounting (if available)
@@ -112,6 +118,10 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
         
         if ceActiveCPU <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareUsedSlots: %d\n' % ceActiveCPU)
+        
+        if maxMem <> CommonUtils.UNDEFMAXITEM:
+            out.write('GLUE2ComputingShareMaxMainMemory: %d\n' % maxMem)
+            out.write('GLUE2ComputingShareMaxVirtualMemory: %d\n' % maxMem)
 
         out.write('GLUE2ComputingShareServingState: %s\n' % queueState)
 

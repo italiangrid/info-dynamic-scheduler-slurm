@@ -24,8 +24,6 @@ from SLURMInfoUtils import *
 
 def main():
     
-    out = sys.stdout
-
     if len(sys.argv) <> 2:
         sys.stderr.write("Usage: info-dynamic-slurm <config-file>\n")
         sys.exit(1)
@@ -43,16 +41,18 @@ def main():
         
         infoContainer = SInfoHandler.parsePartInfo()
         
+        memInfoContainer = SControlInfoHandler.parsePartInfo()
+        
         if slurmCfg.acctEnabled:
             acctContainer = SAcctMgrHandler.parsePolicies(vomap=config['vomap'], cluster=slurmCfg.clustername)
         else:
             acctContainer = None
             
         if config['outputformat'] <> "glue2":
-            GLUE1Handler.process(config, out, infoContainer, acctContainer, slurmCfg)
+            GLUE1Handler.process(config, infoContainer, acctContainer, slurmCfg)
         
         if config['outputformat'] <> "glue1":
-            GLUE2Handler.process(config, out, infoContainer, acctContainer, slurmCfg)
+            GLUE2Handler.process(config, infoContainer, memInfoContainer, acctContainer, slurmCfg)
         
     except:
         sys.stderr.write(CommonUtils.errorMsgFromTrace() + '\n')

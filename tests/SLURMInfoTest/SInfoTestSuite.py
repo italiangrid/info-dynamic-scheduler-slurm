@@ -59,7 +59,7 @@ class SInfoTestCase(unittest.TestCase):
         self.workspace.appendToFile(self.partPattern % pattern_args, tmpfile)
         
         config = DummyConfig()
-        container = SInfoHandler.parsePartInfo(config, tmpfile)
+        container = SInfoHandler.parsePartInfo(tmpfile)
         
         result = container['creamtest1'].maxRuntime == 1800
         result = result and container['creamtest1'].defaultRuntime == 1800
@@ -93,7 +93,7 @@ class SInfoTestCase(unittest.TestCase):
         self.workspace.appendToFile(self.partPattern % pattern_args, tmpfile)
         
         config = DummyConfig()
-        container = SInfoHandler.parsePartInfo(config, tmpfile)
+        container = SInfoHandler.parsePartInfo(tmpfile)
         
         result = container['creamtest1'].state == 'Closed'
         result = result and container['creamtest2'].state == 'Production'
@@ -115,7 +115,7 @@ class SInfoTestCase(unittest.TestCase):
         tmpfile = self.workspace.createFile(self.partPattern % pattern_args)
 
         config = DummyConfig()
-        container = SInfoHandler.parsePartInfo(config, tmpfile)
+        container = SInfoHandler.parsePartInfo(tmpfile)
         
         result = container['creamtest1'].freeCPU == 2
         result = result and container['creamtest1'].totalCPU == 4
@@ -142,7 +142,7 @@ class SInfoTestCase(unittest.TestCase):
         self.workspace.appendToFile(self.partPattern % pattern_args, tmpfile)
 
         config = DummyConfig()
-        container = SInfoHandler.parsePartInfo(config, tmpfile)
+        container = SInfoHandler.parsePartInfo(tmpfile)
         
         result = container['creamtest1'].slotsPerJob == 20
         result = result and container['creamtest2'].slotsPerJob == 4
@@ -171,7 +171,7 @@ class SInfoTestCase(unittest.TestCase):
 
         config = DummyConfig()
         config.slotType = 'CPU'
-        container = SInfoHandler.parsePartInfo(config, tmpfile)
+        container = SInfoHandler.parsePartInfo(tmpfile)
         
         result = container['creamtest1'].slotsPerJob == 40
         result = result and container['creamtest2'].slotsPerJob == 8
@@ -199,7 +199,7 @@ class SInfoTestCase(unittest.TestCase):
 
         config = DummyConfig()
         config.slotType = 'CPU'
-        container = SInfoHandler.parsePartInfo(config, tmpfile)
+        container = SInfoHandler.parsePartInfo(tmpfile)
         
         result = container['creamtest1'].slotsPerJob == -1
         result = result and container['creamtest2'].slotsPerJob == 8
