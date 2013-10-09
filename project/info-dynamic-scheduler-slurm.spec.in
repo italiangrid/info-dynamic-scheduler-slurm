@@ -94,7 +94,12 @@ fi
 
 
 %changelog
-* Fri Aug 31 2012 CREAM group <cream-support@lists.infn.it> - @PKGVERSION@-@PKGRELEASE@
+* Thu Oct 31 2013 CREAM group <cream-support@lists.infn.it> - @PKGVERSION@-@PKGRELEASE@
+- Implemented info-dynamic-slurm
+- Fixed bug https://issues.infn.it/jira/browse/CREAM-116
+- New package structure: triggers for bdii
+
+* Fri Aug 31 2012 CREAM group <cream-support@lists.infn.it> - 1.0.0-1
 - New major release
 
 
