@@ -58,22 +58,23 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
         #
         # Retrieve infos from accounting (if available)
         #
-        try:
-            policyData = acctContainer.policyTable[None, queue]
-            if policyData.maxWallTime <> CommonUtils.UNDEFMAXITEM:
-                ceMaxWallTime = policyData.maxWallTime
-            if policyData.maxRunJobs <> CommonUtils.UNDEFMAXITEM:
-                ceMaxRunJobs = policyData.maxRunJobs
-            if policyData.maxTotJobs <> CommonUtils.UNDEFMAXITEM:
-                ceMaxTotJobs = policyData.maxTotJobs
-            if policyData.maxCPUTime <> CommonUtils.UNDEFMAXITEM:
-                ceMaxCPUTime = policyData.maxCPUTime
-            if policyData.maxCPUPerJob <> CommonUtils.UNDEFMAXITEM:
-                ceSlotsPerJob = policyData.maxCPUPerJob
-            if policyData.priority <> CommonUtils.UNDEFPRIORITY:
-                cePriority = policyData.priority
-        except:
-            logger.debug("No policy from accounting", exc_info=True)
+        if acctContainer <> None:
+            try:
+                policyData = acctContainer.policyTable[None, queue]
+                if policyData.maxWallTime <> CommonUtils.UNDEFMAXITEM:
+                    ceMaxWallTime = policyData.maxWallTime
+                if policyData.maxRunJobs <> CommonUtils.UNDEFMAXITEM:
+                    ceMaxRunJobs = policyData.maxRunJobs
+                if policyData.maxTotJobs <> CommonUtils.UNDEFMAXITEM:
+                    ceMaxTotJobs = policyData.maxTotJobs
+                if policyData.maxCPUTime <> CommonUtils.UNDEFMAXITEM:
+                    ceMaxCPUTime = policyData.maxCPUTime
+                if policyData.maxCPUPerJob <> CommonUtils.UNDEFMAXITEM:
+                    ceSlotsPerJob = policyData.maxCPUPerJob
+                if policyData.priority <> CommonUtils.UNDEFPRIORITY:
+                    cePriority = policyData.priority
+            except:
+                logger.debug("No policy from accounting", exc_info=True)
 
             
         out.write(glue1DN + '\n')
@@ -133,22 +134,30 @@ def process(config, out, infoContainer, acctContainer, slurmCfg):
             viewDN = glue1ViewData[0]
             voName = glue1ViewData[1]
                 
-            try:
-                tmpPol = acctContainer.policyTable[voName, queue]
-                vMaxWallTime = tmpPol.maxWallTime
-                vMaxCPUTime = tmpPol.maxCPUTime
-                vMaxRunJobs = tmpPol.maxRunJobs
-                vMaxTotJobs = tmpPol.maxTotJobs
-                vMaxCPUPerJob = tmpPol.maxCPUPerJob
-                vPriority = tmpPol.priority
-            except:
-                logger.debug("No policy from accounting", exc_info=True)
-                vMaxWallTime = ceMaxWallTime
-                vMaxCPUTime = ceMaxCPUTime
-                vMaxRunJobs = ceMaxRunJobs
-                vMaxTotJobs = ceMaxTotJobs
-                vMaxCPUPerJob = ceSlotsPerJob
-                vPriority = cePriority
+            vMaxWallTime = ceMaxWallTime
+            vMaxCPUTime = ceMaxCPUTime
+            vMaxRunJobs = ceMaxRunJobs
+            vMaxTotJobs = ceMaxTotJobs
+            vMaxCPUPerJob = ceSlotsPerJob
+            vPriority = cePriority
+
+            if acctContainer <> None:
+                try:
+                    tmpPol = acctContainer.policyTable[voName, queue]
+                    if tmpPol.maxWallTime <> CommonUtils.UNDEFMAXITEM:
+                        vMaxWallTime = tmpPol.maxWallTime
+                    if tmpPol.maxCPUTime <> CommonUtils.UNDEFMAXITEM:
+                        vMaxCPUTime = tmpPol.maxCPUTime
+                    if tmpPol.maxRunJobs <> CommonUtils.UNDEFMAXITEM:
+                        vMaxRunJobs = tmpPol.maxRunJobs
+                    if tmpPol.maxTotJobs <> CommonUtils.UNDEFMAXITEM:
+                        vMaxTotJobs = tmpPol.maxTotJobs
+                    if tmpPol.maxCPUPerJob <> CommonUtils.UNDEFMAXITEM:
+                        vMaxCPUPerJob = tmpPol.maxCPUPerJob
+                    if tmpPol.priority <> CommonUtils.UNDEFPRIORITY:
+                        vPriority = tmpPol.priority
+                except:
+                    logger.debug("No policy from accounting", exc_info=True)
                 
             out.write(viewDN + '\n')
             if ceTotCPU <> CommonUtils.UNDEFMAXITEM:
