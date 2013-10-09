@@ -201,6 +201,7 @@ class ConfigInfoHandler(Thread):
         self.maxJobCount = 10000
         self.acctEnabled = False
         self.clustername = ''
+        self.vSizeFactor = 0
         
     def setStream(self, stream):
         self.stream = stream
@@ -233,6 +234,11 @@ class ConfigInfoHandler(Thread):
                 if key == 'clustername':
                     self.clustername = value
             
+                if key == 'vsizefactor':
+                    parsed = re.compile('\d+').search(value)
+                    if parsed:
+                        self.vSizeFactor = int(parsed.group(0))
+
             line = self.stream.readline()
         
         if self.selectType == 'select/cons_res':

@@ -121,7 +121,10 @@ def process(config, infoContainer, memInfoContainer, acctContainer, slurmCfg):
         
         if maxMem <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareMaxMainMemory: %d\n' % maxMem)
-            out.write('GLUE2ComputingShareMaxVirtualMemory: %d\n' % maxMem)
+            
+            if slurmCfg.vSizeFactor > 0:
+                virtMem = int(maxMem * slurmCfg.vSizeFactor / 100)
+                out.write('GLUE2ComputingShareMaxVirtualMemory: %d\n' % virtMem)
 
         out.write('GLUE2ComputingShareServingState: %s\n' % queueState)
 
