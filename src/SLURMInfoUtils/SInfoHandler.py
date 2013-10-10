@@ -93,7 +93,7 @@ class PartitionInfoHandler(Thread):
                     self.errList.append("Wrong format for partition cpu info: " + qTuple[2])
                     continue
                 self.qtable[queue].freeCPU = int(parsed.group(2))
-                self.qtable[queue].activeCPU = int(parsed.group(1)) + int(parsed.group(2))
+                self.qtable[queue].activeCPU = int(parsed.group(1))
                 self.qtable[queue].totalCPU = int(parsed.group(4))
                 
                 if qTuple[3] <> 'n/a':
