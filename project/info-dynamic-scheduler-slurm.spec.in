@@ -79,7 +79,9 @@ EOF
 fi
 
 %triggerun -- bdii
-rm -f /var/lib/bdii/gip/plugin/glite-info-dynamic-ce
+if [ $1 == 0 -o $2 == 0 ] ; then
+    rm -f /var/lib/bdii/gip/plugin/glite-info-dynamic-ce
+fi
 
 %triggerin -- glite-ce-cream-utils
 TMPVAR=`grep -Eo '\[WSInterface\]' /etc/lrms/scheduler.conf`
