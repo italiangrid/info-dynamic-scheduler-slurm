@@ -20,6 +20,9 @@ import logging
 
 from SLURMInfoUtils import CommonUtils
 
+MAX_UINT32 = 2**32-1
+MAX_UINT64 = 2**64-1
+
 def process(config, infoContainer, memInfoContainer, acctContainer, slurmCfg):
     
     out = sys.stdout
@@ -94,24 +97,39 @@ def process(config, infoContainer, memInfoContainer, acctContainer, slurmCfg):
         if maxCPUTime <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareDefaultCPUTime: %d\n' % maxCPUTime)
             out.write('GLUE2ComputingShareMaxCPUTime: %d\n' % maxCPUTime)
+        else:
+            out.write('GLUE2ComputingShareDefaultCPUTime: %d\n' % MAX_UINT64)
+            out.write('GLUE2ComputingShareMaxCPUTime: %d\n' % MAX_UINT64)
                 
         if defaultWallTime <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareDefaultWallTime: %d\n' % defaultWallTime)
+        else:
+            out.write('GLUE2ComputingShareDefaultWallTime: %d\n' % MAX_UINT64)
                 
         if maxWallTime <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareMaxWallTime: %d\n' % maxWallTime)
+        else:
+            out.write('GLUE2ComputingShareMaxWallTime: %d\n' % MAX_UINT64)
 
         if slotsPerJob <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareMaxSlotsPerJob: %d\n' % slotsPerJob)
+        else:
+            out.write('GLUE2ComputingShareMaxSlotsPerJob: %d\n' % MAX_UINT32)
         
         if maxTotJobs <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareMaxTotalJobs: %d\n' % maxTotJobs)
+        else:
+            out.write('GLUE2ComputingShareMaxTotalJobs: %d\n' % MAX_UINT32)
 
         if maxRunJobs <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareMaxRunningJobs: %d\n' % maxRunJobs)
+        else:
+            out.write('GLUE2ComputingShareMaxRunningJobs: %d\n' % MAX_UINT32)
 
         if maxRunJobs <> CommonUtils.UNDEFMAXITEM  and maxTotJobs > maxRunJobs:
             out.write('GLUE2ComputingShareMaxWaitingJobs: %d\n' % (maxTotJobs - maxRunJobs))
+        else:
+            out.write('GLUE2ComputingShareMaxWaitingJobs: %d\n' % MAX_UINT32)
                         
         if ceFreeCPU <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareFreeSlots: %d\n' % ceFreeCPU)
@@ -125,6 +143,10 @@ def process(config, infoContainer, memInfoContainer, acctContainer, slurmCfg):
             if slurmCfg.vSizeFactor > 0:
                 virtMem = int(maxMem * slurmCfg.vSizeFactor / 100)
                 out.write('GLUE2ComputingShareMaxVirtualMemory: %d\n' % virtMem)
+        
+        else:
+            out.write('GLUE2ComputingShareMaxMainMemory: %d\n' % MAX_UINT64)
+            out.write('GLUE2ComputingShareMaxVirtualMemory: %d\n' % MAX_UINT64)
 
         out.write('GLUE2ComputingShareServingState: %s\n' % queueState)
 

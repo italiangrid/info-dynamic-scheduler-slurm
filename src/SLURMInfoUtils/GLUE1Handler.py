@@ -19,6 +19,8 @@ import logging
 
 from SLURMInfoUtils import CommonUtils
 
+MAX_INT32 = 2**31-1
+
 def process(config, infoContainer, acctContainer, slurmCfg):
 
     out = sys.stdout
@@ -97,30 +99,47 @@ def process(config, infoContainer, acctContainer, slurmCfg):
         if ceMaxCPUTime <> CommonUtils.UNDEFMAXITEM:
             out.write('GlueCEPolicyMaxCPUTime: %d\n' % (ceMaxCPUTime / 60))
             out.write('GlueCEPolicyMaxObtainableCPUTime: %d\n' % (ceMaxCPUTime / 60))
+        else:
+            out.write('GlueCEPolicyMaxCPUTime: %d\n' % MAX_INT32)
+            out.write('GlueCEPolicyMaxObtainableCPUTime: %d\n' % MAX_INT32)
             
         if ceMaxTotJobs <> -1:
             out.write('GlueCEPolicyMaxTotalJobs: %d\n' % ceMaxTotJobs)
+        else:
+            out.write('GlueCEPolicyMaxTotalJobs: %d\n' % MAX_INT32)
             
         if ceMaxRunJobs <> CommonUtils.UNDEFMAXITEM:
             out.write('GlueCEPolicyMaxRunningJobs: %d\n' % ceMaxRunJobs)
-            
+        else:
+            out.write('GlueCEPolicyMaxRunningJobs: %d\n' % MAX_INT32)
+                
         if ceMaxRunJobs <> CommonUtils.UNDEFMAXITEM and ceMaxTotJobs > ceMaxRunJobs:
             out.write('GlueCEPolicyMaxWaitingJobs: %d\n' % (ceMaxTotJobs - ceMaxRunJobs))
+        else:
+            out.write('GlueCEPolicyMaxWaitingJobs: %d\n' % MAX_INT32)
             
         if cePriority <> CommonUtils.UNDEFPRIORITY:
             out.write('GlueCEPolicyPriority: %d\n' % cePriority)
+        else:
+            out.write('GlueCEPolicyPriority: %s\n' % MAX_INT32)
 
         #
         # For reference see https://savannah.cern.ch/bugs/?17325
         #
         if ceDefaultWallTime <> CommonUtils.UNDEFMAXITEM:
             out.write('GlueCEPolicyMaxWallClockTime: %d\n' % (ceDefaultWallTime / 60))
+        else:
+            out.write('GlueCEPolicyMaxWallClockTime: %d\n' % MAX_INT32)
 
         if ceMaxWallTime <> CommonUtils.UNDEFMAXITEM:
             out.write('GlueCEPolicyMaxObtainableWallClockTime: %d\n' % (ceMaxWallTime / 60))
+        else:
+            out.write('GlueCEPolicyMaxObtainableWallClockTime: %d\n' % MAX_INT32)
                 
         if ceSlotsPerJob <> CommonUtils.UNDEFMAXITEM:
             out.write('GlueCEPolicyMaxSlotsPerJob: %d\n' % ceSlotsPerJob)
+        else:
+            out.write('GlueCEPolicyMaxSlotsPerJob: %d\n' % MAX_INT32)
 
         if CommonUtils.interfaceIsOff(config):
             out.write('GlueCEStateStatus: Draining\n')
@@ -175,28 +194,45 @@ def process(config, infoContainer, acctContainer, slurmCfg):
 
             if vPriority <> CommonUtils.UNDEFPRIORITY:
                 out.write('GlueCEPolicyPriority: %d\n' % vPriority)
-                
+            else:
+                out.write('GlueCEPolicyPriority: %s\n' % MAX_INT32)
+                 
             if vMaxRunJobs <> CommonUtils.UNDEFMAXITEM:
                 out.write('GlueCEPolicyMaxRunningJobs: %d\n' % vMaxRunJobs)
+            else:
+                out.write('GlueCEPolicyMaxRunningJobs: %d\n' % MAX_INT32)
                 
             if vMaxTotJobs <> CommonUtils.UNDEFMAXITEM:
                 out.write('GlueCEPolicyMaxTotalJobs: %d\n' % vMaxTotJobs)
+            else:
+                out.write('GlueCEPolicyMaxTotalJobs: %d\n' % MAX_INT32)
                 
             if vMaxRunJobs <> CommonUtils.UNDEFMAXITEM and vMaxTotJobs > vMaxRunJobs:
                 out.write('GlueCEPolicyMaxWaitingJobs: %d\n' % (vMaxTotJobs - vMaxRunJobs))
+            else:
+                out.write('GlueCEPolicyMaxWaitingJobs: %d\n' % MAX_INT32)
 
             if ceDefaultWallTime <> CommonUtils.UNDEFMAXITEM:
                 out.write('GlueCEPolicyMaxWallClockTime: %d\n' % (ceDefaultWallTime / 60))
+            else:
+                out.write('GlueCEPolicyMaxWallClockTime: %d\n' % MAX_INT32)
 
             if vMaxWallTime <> CommonUtils.UNDEFMAXITEM:
                 out.write('GlueCEPolicyMaxObtainableWallClockTime: %d\n' % (vMaxWallTime / 60))
+            else:
+                out.write('GlueCEPolicyMaxObtainableWallClockTime: %d\n' % MAX_INT32)
                 
             if vMaxCPUTime <> CommonUtils.UNDEFMAXITEM:
                 out.write('GlueCEPolicyMaxCPUTime: %d\n' % (vMaxCPUTime / 60))
                 out.write('GlueCEPolicyMaxObtainableCPUTime: %d\n' % (vMaxCPUTime / 60))
+            else:
+                out.write('GlueCEPolicyMaxCPUTime: %d\n' % MAX_INT32)
+                out.write('GlueCEPolicyMaxObtainableCPUTime: %d\n' % MAX_INT32)
                 
             if vMaxCPUPerJob <> CommonUtils.UNDEFMAXITEM:
                 out.write('GlueCEPolicyMaxSlotsPerJob: %d\n' % vMaxCPUPerJob)
+            else:
+                out.write('GlueCEPolicyMaxSlotsPerJob: %d\n' % MAX_INT32)
                 
             out.write('\n')
     
