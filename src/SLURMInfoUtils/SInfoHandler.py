@@ -140,7 +140,7 @@ def parsePartInfo(filename=None):
     if filename:
         cmd = shlex.split('cat ' + filename)
     else:
-        cmd = shlex.split('sinfo -h -o "%20P %5a %15C %15l %15L %15s %15F %15B %15z"')
+        cmd = shlex.split('sinfo -h -o "%20P %5a %25C %25l %25L %25s %25F %25B %25z"')
     
     container = PartitionInfoHandler()
     CommonUtils.parseStream(cmd, container)
