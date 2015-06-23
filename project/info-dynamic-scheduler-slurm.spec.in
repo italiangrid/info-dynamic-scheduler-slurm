@@ -43,7 +43,7 @@ rm -rf %{buildroot}
 %{python_sitelib}/SLURMInfoUtils/*.py
 %{python_sitelib}/SLURMInfoUtils/*.pyc
 %{python_sitelib}/SLURMInfoUtils/*.pyo
-%if 0%{?el6}
+%if ! 0%{?el5}
 %{python_sitelib}/*.egg-info
 %endif
 
