@@ -338,6 +338,12 @@ def readConfigFile(configFile):
                     vo = tmpl[1].strip()
                     vomap[group] = vo
 
+        if tmpConf.has_option('Main','enable_glue_2_1'):
+            tmps = tmpConf.get('Main', 'enable_glue_2_1').lower()
+            config['enable_glue_2_1'] = (tmps == 'true')
+        else:
+            config['enable_glue_2_1'] = False
+
         if tmpConf.has_option('WSInterface','status-probe'):
             config['status-probe'] = tmpConf.get('WSInterface', 'status-probe').strip('"\'')
 
@@ -354,6 +360,9 @@ def readConfigFile(configFile):
 
 
 def convertTimeLimit(tstr):
+
+    if tstr.lower() == 'infinite':
+        return 2**32
 
     tmpl = tstr.split('-')
     if len(tmpl) > 1:

@@ -23,7 +23,7 @@ from SLURMInfoUtils import CommonUtils
 MAX_UINT32 = 2**32-1
 MAX_UINT64 = 2**64-1
 
-def process(config, infoContainer, memInfoContainer, acctContainer, slurmCfg):
+def process(config, infoContainer, memInfoContainer, acctContainer, slurmCfg, gpuStats=None):
     
     out = sys.stdout
 
@@ -136,6 +136,10 @@ def process(config, infoContainer, memInfoContainer, acctContainer, slurmCfg):
         
         if ceActiveCPU <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareUsedSlots: %d\n' % ceActiveCPU)
+        
+        if config['enable_glue_2_1'] and gpuStats:
+            out.write('GLUE2ComputingShareFreeAcceleratorSlots: GPU:%d\n' % (gpuStats[0] - gpuStats[1]))
+            out.write('GLUE2ComputingShareUsedAcceleratorSlots: GPU:%d\n' % gpuStats[1])
         
         if maxMem <> CommonUtils.UNDEFMAXITEM:
             out.write('GLUE2ComputingShareMaxMainMemory: %d\n' % maxMem)

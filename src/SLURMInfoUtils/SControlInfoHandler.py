@@ -30,9 +30,12 @@ class NodesInfoHandler(Thread):
         self.errList = list()
         self.ncpu = 0
         self.nfree = 0
+        self.gpuTable = dict()
         self.stateRegex = re.compile('State=(IDLE|COMPLETING|ALLOCATED[+]?|DRAINING|MIXED)')
         self.tcpuRegex = re.compile('CPUTot=([0-9]+)')
         self.acpuRegex = re.compile('CPUAlloc=([0-9]+)')
+        self.nodesRegex = re.compile('NodeHostName=([^\s]+)')
+        self.GresRegex = re.compile('Gres=([^\s]+)')
     
     def setStream(self, stream):
         self.stream = stream
@@ -47,30 +50,41 @@ class NodesInfoHandler(Thread):
                 parsed = self.stateRegex.search(line)
                 if not parsed:
                     continue
-                
                 nodeState = parsed.group(1)
                 
                 parsed = self.tcpuRegex.search(line)
                 if not parsed:
                     continue
-            
                 tcpu = int(parsed.group(1))
             
                 parsed = self.acpuRegex.search(line)
                 if not parsed:
                     continue
-            
                 acpu = int(parsed.group(1))
 
                 self.ncpu += tcpu
                 if nodeState <> "DRAINING":
                     self.nfree += (tcpu - acpu)
 
+                parsed = self.nodesRegex.search(line)
+                if not parsed:
+                    continue
+                nodeName = parsed.group(1)
+                self.gpuTable[nodeName] = 0
+                
+                parsed = self.GresRegex.search(line)
+                if not parsed:
+                    continue
+                for tok1 in parsed.group(1).split(','):
+                    tmpt = tok1.split(':')
+                    if len(tmpt) and tmpt[0] == 'gpu':
+                        self.gpuTable[nodeName] = int(tmpt[-1]) if len(tmpt) > 1 else 1
+
             finally:
                 line = self.stream.readline()
 
 
-def parseCPUInfo(filename=None):
+def parseNodesInfo(filename=None):
     if filename:
         cmd = shlex.split('cat ' + filename)
     else:
@@ -78,7 +92,7 @@ def parseCPUInfo(filename=None):
     
     container = NodesInfoHandler()
     CommonUtils.parseStream(cmd, container)
-    return container.ncpu, container.nfree
+    return container
 
 
 class JobInfoHandler(Thread):
@@ -177,13 +191,13 @@ class JobInfoHandler(Thread):
                 line = self.stream.readline()
 
 
-def parseJobInfo(container, filename=None):
+def parseJobInfo(outWriter, filename=None):
     if filename:
         cmd = shlex.split('cat ' + filename)
     else:
         cmd = shlex.split('scontrol -o show jobs')
     
-    container = JobInfoHandler(container)
+    container = JobInfoHandler(outWriter)
     CommonUtils.parseStream(cmd, container)
 
 

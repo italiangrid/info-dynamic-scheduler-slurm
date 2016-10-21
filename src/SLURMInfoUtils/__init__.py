@@ -19,5 +19,6 @@ __all__ = [ "SInfoHandler",
             "SAcctMgrHandler",
             "GLUE1Handler",
             "GLUE2Handler",
+            "NvidiaSMIHandler",
             "CommonUtils" ]
 

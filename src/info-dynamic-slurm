@@ -47,12 +47,34 @@ def main():
             acctContainer = SAcctMgrHandler.parsePolicies(vomap=config['vomap'], cluster=slurmCfg.clustername)
         else:
             acctContainer = None
+        
+        if config['enable_glue_2_1']:
+        
+            usedGPUSlots = 0
+            totalGPUSlots = 0
+            
+            nodesInfo = SControlInfoHandler.parseNodesInfo()
+            for nodeName, gpuNum in nodesInfo.gpuTable.iteritems():
+                try:
+
+                    totalGPUSlots += gpuNum
+                    smiHandler = NvidiaSMIHandler.parseGPUInfo(nodeName)
+                    for nProcs in smiHandler.num_of_procs.values():
+                        if nProcs > 0:
+                            usedGPUSlots += 1
+
+                except Exception, ex:
+                    sys.stderr.write(repr(ex) + '\n')
+
+            gpuStats = (totalGPUSlots, usedGPUSlots)
+        else:
+            gpuStats = None
             
         if config['outputformat'] <> "glue2":
             GLUE1Handler.process(config, infoContainer, acctContainer, slurmCfg)
         
         if config['outputformat'] <> "glue1":
-            GLUE2Handler.process(config, infoContainer, memInfoContainer, acctContainer, slurmCfg)
+            GLUE2Handler.process(config, infoContainer, memInfoContainer, acctContainer, slurmCfg, gpuStats)
         
     except:
         sys.stderr.write(CommonUtils.errorMsgFromTrace() + '\n')
