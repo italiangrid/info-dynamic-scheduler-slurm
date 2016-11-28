@@ -61,7 +61,9 @@ def parseGPUInfo(cudaHost, filename=None):
     if filename:
         cmd = shlex.split('cat ' + filename)
     else:
-        cmd = shlex.split('ssh %s "nvidia-smi --query-compute-apps=gpu_uuid,pid --format=csv,noheader"' % cudaHost)
+        smi_cmd = '"nvidia-smi --query-compute-apps=gpu_uuid,pid --format=csv,noheader"'
+        ssh_opts = '-o PasswordAuthentication=no'
+        cmd = shlex.split('ssh %s %s %s' % (ssh_opts, cudaHost, smi_cmd)
             
     logger.debug("Calling executable: " + repr(cmd))
 
