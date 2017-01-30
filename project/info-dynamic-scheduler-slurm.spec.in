@@ -96,7 +96,13 @@ fi
 
 
 %changelog
-* Thu Oct 31 2013 CREAM group <cream-support@lists.infn.it> - @PKGVERSION@-@PKGRELEASE@
+* Mon Jan 30 2017 CREAM group <cream-support@lists.infn.it> - @PKGVERSION@-@PKGRELEASE@
+- GPU support
+
+* Wed Oct 05 2016 CREAM group <cream-support@lists.infn.it> - 1.0.3-1
+- Fixed bug https://issues.infn.it/jira/browse/CREAM-174
+
+* Thu Oct 31 2013 CREAM group <cream-support@lists.infn.it> - 1.0.2-1
 - Fixed bug https://issues.infn.it/jira/browse/CREAM-140
 - Fixed bug https://issues.infn.it/jira/browse/CREAM-142
 
