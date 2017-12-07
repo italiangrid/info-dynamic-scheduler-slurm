@@ -116,7 +116,7 @@ class PartitionInfoHandler(Thread):
                         self.qtable[queue].slotsPerJob = maxNodes * maxCPUNode
                         
                     else:
-                        tmpl = qTuple[8].split(':')
+                        tmpl = [ i.translate(None, '+') for i in qTuple[8].split(':') ]                        
                         socketNum = int(tmpl[0])
                         coreNum = int(tmpl[1])
                         thrNum = int(tmpl[2])
