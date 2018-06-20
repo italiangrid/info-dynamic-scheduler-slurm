@@ -6,7 +6,7 @@ from distutils.core import setup
 from distutils.command.bdist_rpm import bdist_rpm as _bdist_rpm
 
 pkg_name = 'info-dynamic-scheduler-slurm'
-pkg_version = '1.0.4'
+pkg_version = '1.0.5'
 pkg_release = '1'
 
 source_items = "config setup.py src"

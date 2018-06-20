@@ -97,6 +97,9 @@ fi
 
 %changelog
 * Mon Jan 30 2017 CREAM group <cream-support@lists.infn.it> - @PKGVERSION@-@PKGRELEASE@
+- Minor fixes
+
+* Mon Jan 30 2017 CREAM group <cream-support@lists.infn.it> - 1.0.4-1
 - GPU support
 
 * Wed Oct 05 2016 CREAM group <cream-support@lists.infn.it> - 1.0.3-1
